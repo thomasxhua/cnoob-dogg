@@ -3,11 +3,11 @@
 
 typedef enum
 {
-    piece_none,
-    piece_wP,piece_wN,piece_wB,piece_wR,piece_wQ,piece_wK,
-    piece_bP,piece_bN,piece_bB,piece_bR,piece_bQ,piece_bK
-} piece;
+    PIECE_NONE,
+    PIECE_WP,PIECE_WN,PIECE_WB,PIECE_WR,PIECE_WQ,PIECE_WK,
+    PIECE_BP,PIECE_BN,PIECE_BB,PIECE_BR,PIECE_BQ,PIECE_BK
+} piece_t;
 
-char piece_to_char(piece p);
+char piece_to_char(piece_t p);
 
 #endif // PIECE_H

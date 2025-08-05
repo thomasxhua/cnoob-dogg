@@ -4,6 +4,7 @@ CXXFLAGS = -std=c99 -Wall -Wextra -pedantic -static
 LDFLAGS  =
 
 SRC = \
+	src/utils.c \
 	src/piece.c \
 	src/bitboard.c \
 	src/main.c \
