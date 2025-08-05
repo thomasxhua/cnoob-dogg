@@ -49,6 +49,7 @@ char* bitboard_to_string(const Bitboard* board)
 
 piece_t bitboard_get_piece(const Bitboard* board, uint64_t square)
 {
+    assert(board != NULL);
     if (board->k & square)
         return (board->w & square) ? PIECE_WK : PIECE_BK;
     else if (board->q & square)
@@ -66,6 +67,7 @@ piece_t bitboard_get_piece(const Bitboard* board, uint64_t square)
 
 uint64_t* bitboard_get_piece_ptr(Bitboard* board, uint64_t square)
 {
+    assert(board != NULL);
     if (board->k & square) return &board->k;
     if (board->q & square) return &board->q;
     if (board->r & square) return &board->r;
@@ -78,30 +80,31 @@ uint64_t* bitboard_get_piece_ptr(Bitboard* board, uint64_t square)
 void bitboard_set_starting_position(Bitboard* board)
 {
     assert(board != NULL);
-    board->w |= RANK_1 | RANK_2;
-    board->p |= RANK_2 | RANK_7;
-    board->n |= B1|G1  | B8|G8;
-    board->b |= C1|F1  | C8|F8;
-    board->r |= A1|H1  | A8|H8;
-    board->q |= D1     | D8;
-    board->k |= E1     | E8;
+    board->w = RANK_1 | RANK_2;
+    board->p = RANK_2 | RANK_7;
+    board->n = B1|G1  | B8|G8;
+    board->b = C1|F1  | C8|F8;
+    board->r = A1|H1  | A8|H8;
+    board->q = D1     | D8;
+    board->k = E1     | E8;
 }
 
 piece_t bitboard_move(Bitboard* board, uint64_t from, uint64_t to)
 {
+    assert(board != NULL);
     assert(is_power_of_two(from) && is_power_of_two(to));
     uint64_t* from_piece_ptr = bitboard_get_piece_ptr(board, from);
     if (!from_piece_ptr)
         return PIECE_NONE;
     const piece_t to_piece = bitboard_get_piece(board, to);
     uint64_t* to_piece_ptr = bitboard_get_piece_ptr(board, to);
+    bool is_from_piece_white = false;
     // remove from_piece
     (*from_piece_ptr) -= from;
-    bool is_white = false;
     if (board->w & from)
     {
         board->w -= from;
-        is_white = true;
+        is_from_piece_white = true;
     }
     if (to_piece_ptr)
     {
@@ -112,7 +115,7 @@ piece_t bitboard_move(Bitboard* board, uint64_t from, uint64_t to)
     }
     // add to_piece
     (*from_piece_ptr) |= to;
-    if (is_white)
+    if (is_from_piece_white)
         board->w |= to;
     return to_piece;
 }

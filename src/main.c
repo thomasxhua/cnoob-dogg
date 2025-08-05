@@ -13,7 +13,7 @@ int main()
     };
     const size_t moves_size = sizeof(moves) / sizeof(moves[0]);
 
-    Bitboard* board = calloc(1, sizeof(Bitboard));
+    Bitboard* board = malloc(sizeof(Bitboard));
     bitboard_set_starting_position(board);
     for (size_t i=0; i<moves_size; ++i)
     {
