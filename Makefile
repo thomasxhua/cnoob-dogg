@@ -7,6 +7,7 @@ SRC = \
 	src/utils.c \
 	src/piece.c \
 	src/bitboard.c \
+	src/board_state.c \
 	src/main.c \
 
 MAIN = dist/main.exe

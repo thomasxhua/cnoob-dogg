@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-char* square_to_string(uint64_t square)
+char* square_to_string(square_t square)
 {
     switch (square)
     {
@@ -25,12 +25,12 @@ char* square_to_string(uint64_t square)
     }
 }
 
-char* bitboard_to_string(const Bitboard* board)
+char* bitboard_to_string_annotated(const Bitboard* board, square_t annotation)
 {
     assert(board != NULL);
     static char str[BOARD_SIZE*2 + RANK_SIZE + 1] = {0};
     uint64_t file_num = FILE_SIZE;
-    uint64_t mask     = 1ULL << (file_num * RANK_SIZE);
+    square_t mask     = 1ULL << (file_num * RANK_SIZE);
     size_t idx        = 0;
     for (uint64_t i=0; i<BOARD_SIZE; ++i)
     {
@@ -41,13 +41,18 @@ char* bitboard_to_string(const Bitboard* board)
             mask = 1ULL << (--file_num * RANK_SIZE);
         }
         str[idx++] = piece_to_char(bitboard_get_piece(board, mask));
-        str[idx++] = '.';
+        str[idx++] = (mask & annotation) ? '*' : '.';
         mask <<= 1;
     }
     return str;
 }
 
-piece_t bitboard_get_piece(const Bitboard* board, uint64_t square)
+char* bitboard_to_string(const Bitboard* board)
+{
+    return bitboard_to_string_annotated(board, 0);
+}
+
+piece_t bitboard_get_piece(const Bitboard* board, square_t square)
 {
     assert(board != NULL);
     if (board->k & square)
@@ -65,7 +70,13 @@ piece_t bitboard_get_piece(const Bitboard* board, uint64_t square)
     return PIECE_NONE;
 }
 
-uint64_t* bitboard_get_piece_ptr(Bitboard* board, uint64_t square)
+square_t bitboard_get_all_pieces(const Bitboard* board)
+{
+    assert(board != NULL);
+    return board->p|board->n|board->b|board->r|board->q|board->k;
+}
+
+uint64_t* bitboard_get_piece_ptr(Bitboard* board, square_t square)
 {
     assert(board != NULL);
     if (board->k & square) return &board->k;
@@ -75,6 +86,12 @@ uint64_t* bitboard_get_piece_ptr(Bitboard* board, uint64_t square)
     if (board->n & square) return &board->n;
     if (board->p & square) return &board->p;
     return NULL;
+}
+
+bool bitboard_is_white(Bitboard* board, square_t square)
+{
+    assert(board != NULL);
+    return board->w & square;
 }
 
 void bitboard_set_starting_position(Bitboard* board)
@@ -89,15 +106,15 @@ void bitboard_set_starting_position(Bitboard* board)
     board->k = E1     | E8;
 }
 
-piece_t bitboard_move(Bitboard* board, uint64_t from, uint64_t to)
+piece_t bitboard_move(Bitboard* board, square_t from, square_t to)
 {
     assert(board != NULL);
     assert(is_power_of_two(from) && is_power_of_two(to));
-    uint64_t* from_piece_ptr = bitboard_get_piece_ptr(board, from);
+    square_t* from_piece_ptr = bitboard_get_piece_ptr(board, from);
     if (!from_piece_ptr)
         return PIECE_NONE;
     const piece_t to_piece = bitboard_get_piece(board, to);
-    uint64_t* to_piece_ptr = bitboard_get_piece_ptr(board, to);
+    square_t* to_piece_ptr = bitboard_get_piece_ptr(board, to);
     bool is_from_piece_white = false;
     // remove from_piece
     (*from_piece_ptr) -= from;
