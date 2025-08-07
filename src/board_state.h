@@ -17,7 +17,7 @@ typedef struct
     uint64_t fullmove_count;
     uint64_t halfmove_clock;
     square_t en_passant_square;
-    uint8_t castling_availability;
+    uint8_t castling;
     color_t active_color;
 } BoardState;
 
@@ -34,17 +34,18 @@ typedef struct
     uint64_t queening_choice;
 } Move;
 
-static const uint64_t BOARD_STATE_FIELDS_CASTLING_WK  = 1ULL << 0;
-static const uint64_t BOARD_STATE_FIELDS_CASTLING_WQ  = 1ULL << 1;
-static const uint64_t BOARD_STATE_FIELDS_CASTLING_BK  = 1ULL << 2;
-static const uint64_t BOARD_STATE_FIELDS_CASTLING_BQ  = 1ULL << 3;
-static const uint64_t BOARD_STATE_FIELDS_ACTIVE_COLOR = 1ULL << 4;
+static const uint8_t BOARD_STATE_FIELDS_CASTLING_WK  = 1ULL << 0;
+static const uint8_t BOARD_STATE_FIELDS_CASTLING_WQ  = 1ULL << 1;
+static const uint8_t BOARD_STATE_FIELDS_CASTLING_BK  = 1ULL << 2;
+static const uint8_t BOARD_STATE_FIELDS_CASTLING_BQ  = 1ULL << 3;
+static const uint8_t BOARD_STATE_FIELDS_ACTIVE_COLOR = 1ULL << 4;
 
 square_t board_state_get_pseudo_legal_moves_pawns(BoardState* state, bool is_white);
 square_t board_state_get_pseudo_legal_moves_knights(BoardState* state, bool is_white);
 square_t board_state_get_pseudo_legal_moves_bishops(BoardState* state, bool is_white);
 square_t board_state_get_pseudo_legal_moves_rooks(BoardState* state, bool is_white);
 square_t board_state_get_pseudo_legal_moves_queens(BoardState* state, bool is_white);
+square_t board_state_get_pseudo_legal_moves_kings(BoardState* state, bool is_white);
 square_t board_state_get_pseudo_legal_moves(BoardState* state, square_t from);
 
 #endif // BOARD_STATE_H

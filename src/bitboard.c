@@ -117,18 +117,18 @@ piece_t bitboard_move(Bitboard* board, square_t from, square_t to)
     square_t* to_piece_ptr = bitboard_get_piece_ptr(board, to);
     bool is_from_piece_white = false;
     // remove from_piece
-    (*from_piece_ptr) ^= from;
+    (*from_piece_ptr) &= ~from; // TODO: maybe bitminus, a & ~b
     if (board->w & from)
     {
-        board->w ^= from;
+        board->w &= ~from;
         is_from_piece_white = true;
     }
     if (to_piece_ptr)
     {
         // remove to_piece
-        (*to_piece_ptr) ^= to;
+        (*to_piece_ptr) &= ~to;
         if (board->w & to)
-            board->w ^= to;
+            board->w &= ~to;
     }
     // add from_piece
     (*from_piece_ptr) |= to;

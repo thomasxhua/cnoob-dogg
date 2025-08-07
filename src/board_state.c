@@ -17,7 +17,7 @@ square_t board_state_get_pseudo_legal_moves_pawns(BoardState* state, bool is_whi
         : ~all_pieces & ((own_pawns >> RANK_SIZE) | (own_pawns & RANK_7) >> 2 * RANK_SIZE);
     const square_t pawns_a         = own_pawns & FILE_A;
     const square_t pawns_h         = own_pawns & FILE_H;
-    const square_t pawns_inner     = own_pawns & (BOARD_FULL ^ (FILE_A|FILE_B));
+    const square_t pawns_inner     = own_pawns & (BOARD_FULL & ~(FILE_A|FILE_B));
     const square_t attacks         = is_white
         ? opponent_pieces & (
             pawns_a       << (RANK_SIZE + 1)
@@ -190,6 +190,48 @@ square_t board_state_get_pseudo_legal_moves_queens(BoardState* state, bool is_wh
         | get_pseudo_legal_moves_rooks(state, is_white, state->board.q);
 }
 
+square_t board_state_get_pseudo_legal_moves_kings(BoardState* state, bool is_white)
+{
+    assert(state != NULL);
+    const Bitboard* board     = &state->board;
+    const square_t own_kings  = board->k & (is_white ? board->w : ~board->w);
+    const square_t all_pieces = bitboard_get_all_pieces(board);
+    const square_t own_pieces = all_pieces & (is_white ? board->w : ~board->w);
+    square_t moves = 0;
+    // 1.2.3.
+    // 4.K.5.
+    // 6.7.8.
+    for (square_t square = 1ULL; square; square <<= 1)
+    {
+        if (!(own_kings & square))
+            continue;
+        moves |=
+            ((square   & (RANK_8|FILE_A)) ? 0 : (square << (RANK_SIZE - 1)))  // 1
+            | ((square & (RANK_8       )) ? 0 : (square << (RANK_SIZE)))      // 2
+            | ((square & (RANK_8|FILE_H)) ? 0 : (square << (RANK_SIZE + 1)))  // 3
+            | ((square & (       FILE_A)) ? 0 : (square >> 1))                // 4
+            | ((square & (       FILE_H)) ? 0 : (square << 1))                // 5
+            | ((square & (RANK_1|FILE_A)) ? 0 : (square >> (RANK_SIZE + 1)))  // 6
+            | ((square & (RANK_1       )) ? 0 : (square >> (RANK_SIZE)))      // 7
+            | ((square & (RANK_1|FILE_H)) ? 0 : (square >> (RANK_SIZE - 1))); // 8
+    }
+    moves &= ~own_pieces;
+    // castling should only be available with kings on starting squares and will not be checked
+    if (is_white)
+    {
+        moves |=
+            (((state->castling   & BOARD_STATE_FIELDS_CASTLING_WK) && !(all_pieces & (F1|G1)))    ? G1 : 0)
+            | (((state->castling & BOARD_STATE_FIELDS_CASTLING_WQ) && !(all_pieces & (B1|C1|D1))) ? C1 : 0);
+    }
+    else
+    {
+        moves |=
+            (((state->castling   & BOARD_STATE_FIELDS_CASTLING_BK) && !(all_pieces & (F8|G8)))    ? G8 : 0)
+            | (((state->castling & BOARD_STATE_FIELDS_CASTLING_BQ) && !(all_pieces & (B8|C8|D8))) ? C8 : 0);
+    }
+    return moves;
+}
+
 square_t board_state_get_pseudo_legal_moves(BoardState* state, square_t from)
 {
     assert(state != NULL);
@@ -204,6 +246,12 @@ square_t board_state_get_pseudo_legal_moves(BoardState* state, square_t from)
         return board_state_get_pseudo_legal_moves_knights(state, is_from_piece_white);
     else if (from_piece_ptr == &board->b)
         return board_state_get_pseudo_legal_moves_bishops(state, is_from_piece_white);
+    else if (from_piece_ptr == &board->r)
+        return board_state_get_pseudo_legal_moves_rooks(state, is_from_piece_white);
+    else if (from_piece_ptr == &board->q)
+        return board_state_get_pseudo_legal_moves_queens(state, is_from_piece_white);
+    else if (from_piece_ptr == &board->k)
+        return board_state_get_pseudo_legal_moves_kings(state, is_from_piece_white);
     return 0;
 }
 
