@@ -26,7 +26,7 @@ int main()
         const uint64_t from   = moves[i];
         const uint64_t to     = moves[++i];
         const piece_t removed = bitboard_move(board,from,to);
-        const square_t annotation = board_state_get_pseudo_legal_moves_knights(&state, !is_white);
+        const square_t annotation = board_state_get_pseudo_legal_moves_queens(&state, !is_white);
         printf("\n%s\nremoved: %c (%s,%s)\n",
             bitboard_to_string_annotated(board, annotation),
             piece_to_char(removed),
@@ -34,8 +34,10 @@ int main()
             square_to_string(to));
     }
 #else
-    board->n |= A1;
-    const square_t annotation = board_state_get_pseudo_legal_moves_knights(&state, false);
+    board->q |= E4;
+    board->n |= G4|E7;
+    board->w |= G4;
+    const square_t annotation = board_state_get_pseudo_legal_moves_queens(&state, false);
     printf("%s\n", bitboard_to_string_annotated(board, annotation));
 #endif
 

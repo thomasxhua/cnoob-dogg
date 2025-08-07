@@ -72,6 +72,7 @@ static const square_t FILE_H = H1|H2|H3|H4|H5|H6|H7|H8;
 static const square_t BOARD_FULL      = ~1UL;
 static const square_t BOARD_QUEENSIDE = FILE_A|FILE_B|FILE_C|FILE_D;
 static const square_t BOARD_KINGSIDE  = FILE_E|FILE_F|FILE_G|FILE_H;
+static const square_t BOARD_EDGE      = RANK_1|RANK_8|FILE_A|FILE_H;
 
 char* square_to_string(square_t square);
 
