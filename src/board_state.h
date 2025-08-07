@@ -40,6 +40,8 @@ static const uint64_t BOARD_STATE_FIELDS_CASTLING_BK  = 1ULL << 2;
 static const uint64_t BOARD_STATE_FIELDS_CASTLING_BQ  = 1ULL << 3;
 static const uint64_t BOARD_STATE_FIELDS_ACTIVE_COLOR = 1ULL << 4;
 
+square_t board_state_get_pseudo_legal_moves_pawns(BoardState* state, bool is_white);
+square_t board_state_get_pseudo_legal_moves_knights(BoardState* state, bool is_white);
 square_t board_state_get_pseudo_legal_moves(BoardState* state, square_t from);
 
 #endif // BOARD_STATE_H

@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-square_t get_pseudo_legal_moves_pawns(BoardState* state, bool is_white)
+square_t board_state_get_pseudo_legal_moves_pawns(BoardState* state, bool is_white)
 {
     assert(state != NULL);
     // TODO: en passant
@@ -32,6 +32,28 @@ square_t get_pseudo_legal_moves_pawns(BoardState* state, bool is_white)
     return moves | attacks | state->en_passant_square;
 }
 
+square_t board_state_get_pseudo_legal_moves_knights(BoardState* state, bool is_white)
+{
+    assert(state != NULL);
+    const Bitboard* board = &state->board;
+    const square_t own_knights = board->n & (is_white ? board->w : ~board->w);
+    const square_t own_pieces  = bitboard_get_all_pieces(board) & (is_white ? board->w : ~board->w);
+    //   .NW .NE .
+    //  WN . . .EN
+    //   . .N. . .
+    //  WS . . .ES
+    //   .SW .SE .
+    return ~own_pieces & (
+        (own_knights   & ~(FILE_A        | RANK_8|RANK_7)) << ((2 * RANK_SIZE) - 1)   // NW
+        | (own_knights & ~(FILE_H        | RANK_8|RANK_7)) << ((2 * RANK_SIZE) + 1)   // NE
+        | (own_knights & ~(FILE_A|FILE_B | RANK_8       )) << ((1 * RANK_SIZE) - 2)   // WN
+        | (own_knights & ~(FILE_G|FILE_H | RANK_8       )) << ((1 * RANK_SIZE) + 2)   // EN
+        | (own_knights & ~(FILE_A|FILE_B | RANK_1       )) >> ((1 * RANK_SIZE) + 2)   // WS
+        | (own_knights & ~(FILE_A|FILE_B | RANK_1       )) >> ((1 * RANK_SIZE) - 2)   // ES
+        | (own_knights & ~(FILE_A        | RANK_1|RANK_2)) >> ((2 * RANK_SIZE) + 1)   // SW
+        | (own_knights & ~(FILE_H        | RANK_1|RANK_2)) >> ((2 * RANK_SIZE) - 1)); // SE
+}
+
 square_t board_state_get_pseudo_legal_moves(BoardState* state, square_t from)
 {
     assert(state != NULL);
@@ -40,13 +62,10 @@ square_t board_state_get_pseudo_legal_moves(BoardState* state, square_t from)
     if (!from_piece_ptr)
         return 0;
     const bool is_from_piece_white = bitboard_is_white(board, from);
-    //size_t count = 0;
     if (from_piece_ptr == &board->p)
-    {
-        return is_from_piece_white
-            ? get_pseudo_legal_moves_pawns(state, true)
-            : get_pseudo_legal_moves_pawns(state, false);
-    }
+        return board_state_get_pseudo_legal_moves_pawns(state, is_from_piece_white);
+    else if (from_piece_ptr == &board->n)
+        return board_state_get_pseudo_legal_moves_knights(state, is_from_piece_white);
     return 0;
 }
 
