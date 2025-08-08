@@ -22,8 +22,10 @@ int main()
     
     BoardState state = {0};
     Bitboard* board = &state.board;
-    state.castling = 0xF;
-
+    state.fields |= BOARD_STATE_FIELDS_ACTIVE_COLOR_W;
+    state.fields |= BOARD_STATE_FIELDS_CASTLING;
+    state.fullmove_count = 420;
+    state.halfmove_clock = 69;
 #if 1
     bitboard_set_starting_position(board);
     for (size_t i=0; i<moves_size; ++i)
@@ -33,11 +35,12 @@ int main()
         const uint64_t to     = moves[++i];
         const piece_t removed = bitboard_move(board,from,to);
         const square_t annotation = board_state_get_pseudo_legal_moves_kings(&state, !is_white);
-        printf("\n%s\n%s-%s, removed: [%c]\n",
+        printf("\n%s\n%s-%s, removed: [%c]\nFEN: \'%s\'",
             bitboard_to_string_annotated(board, annotation),
             square_to_string(from),
             square_to_string(to),
-            piece_to_char(removed));
+            piece_to_char(removed),
+            board_state_to_fen_string(&state));
     }
 #else
     board->k |= F5;

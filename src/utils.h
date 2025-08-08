@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 bool is_power_of_two(uint64_t n);
+char* uint64_to_string(uint64_t n);
 
 #endif // UTILS_H
 

@@ -30,7 +30,7 @@ char* bitboard_to_string_annotated(const Bitboard* board, square_t annotation)
     assert(board != NULL);
     static char str[BOARD_SIZE*2 + RANK_SIZE + 1] = {0};
     uint64_t file_num = FILE_SIZE;
-    square_t mask     = 1ULL << (file_num * RANK_SIZE);
+    square_t square   = 1ULL << (file_num * RANK_SIZE);
     size_t idx        = 0;
     for (uint64_t i=0; i<BOARD_SIZE; ++i)
     {
@@ -38,11 +38,11 @@ char* bitboard_to_string_annotated(const Bitboard* board, square_t annotation)
         {
             if (i > 0)
                 str[idx++] = '\n';
-            mask = 1ULL << (--file_num * RANK_SIZE);
+            square = 1ULL << (--file_num * RANK_SIZE);
         }
-        str[idx++] = piece_to_char(bitboard_get_piece(board, mask));
-        str[idx++] = (mask & annotation) ? '*' : '.';
-        mask <<= 1;
+        str[idx++] = piece_to_char(bitboard_get_piece(board, square));
+        str[idx++] = (square & annotation) ? '*' : '.';
+        square <<= 1;
     }
     return str;
 }

@@ -4,6 +4,102 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include "utils.h"
+
+char* board_state_to_fen_string(const BoardState* state)
+{
+    #define IF_EMPTY_PIECE_HANDLE_EMPTY_PIECE \
+        if (empty_counter) \
+        { \
+            str[idx++] = '0' + empty_counter; \
+            empty_counter = 0; \
+        }
+    assert(state != NULL);
+    const Bitboard* board = &state->board;
+    #define STR_SIZE \
+        RANK_SIZE*FILE_SIZE + (FILE_SIZE-1) /* piece placement data */ \
+        + 2  /* active color */ \
+        + 5  /* castling */ \
+        + 3  /* en passant */ \
+        + 4  /* halfmove clock */ \
+        + 21 /* fullmove count */
+    static char str[STR_SIZE] = {0};
+    #undef STR_SIZE
+    // piece placement data
+    uint64_t empty_counter = 0;
+    uint64_t file_num = FILE_SIZE;
+    square_t square   = 1ULL << (file_num * RANK_SIZE);
+    size_t idx        = 0;
+    for (uint64_t i=0; i<BOARD_SIZE; ++i)
+    {
+        if (i % RANK_SIZE == 0)
+        {
+            if (i > 0)
+            {
+                IF_EMPTY_PIECE_HANDLE_EMPTY_PIECE;
+                str[idx++] = '/';
+            }
+            square = 1ULL << (--file_num * RANK_SIZE);
+        }
+        const piece_t piece = bitboard_get_piece(board, square);
+        if (piece != PIECE_NONE)
+        {
+            IF_EMPTY_PIECE_HANDLE_EMPTY_PIECE;
+            str[idx++] = piece_to_char(piece);
+            empty_counter = 0;
+        }
+        else
+        {
+            ++empty_counter;
+        }
+        square <<= 1;
+    }
+    if (empty_counter)
+    {
+        str[idx++] = '0' + empty_counter;
+        empty_counter = 0;
+    }
+    // active color
+    str[idx++] = ' ';
+    str[idx++] = (state->fields & BOARD_STATE_FIELDS_ACTIVE_COLOR_W) ? 'w' : 'b';
+    // castling
+    str[idx++] = ' ';
+    if (state->fields & BOARD_STATE_FIELDS_CASTLING)
+    {
+        if (state->fields & BOARD_STATE_FIELDS_CASTLING_WK) str[idx++] = 'K';
+        if (state->fields & BOARD_STATE_FIELDS_CASTLING_WQ) str[idx++] = 'Q';
+        if (state->fields & BOARD_STATE_FIELDS_CASTLING_BK) str[idx++] = 'k';
+        if (state->fields & BOARD_STATE_FIELDS_CASTLING_BQ) str[idx++] = 'q';
+    }
+    else
+    {
+        str[idx++] = '-';
+    }
+    // en passant square
+    str[idx++] = ' ';
+    if (state->en_passant_square)
+    {
+        const char* square_str = square_to_string(state->en_passant_square);
+        str[idx++] = square_str[0];
+        str[idx++] = square_str[1];
+    }
+    else
+    {
+        str[idx++] = '-';
+    }
+    // halfmove clock
+    str[idx++] = ' ';
+    for (char* halfmove_str = uint64_to_string(state->halfmove_clock); *halfmove_str != '\0'; ++halfmove_str)
+        str[idx++] = *halfmove_str;
+    // fullmove count
+    str[idx++] = ' ';
+    for (char* fullmove_str = uint64_to_string(state->fullmove_count); *fullmove_str != '\0'; ++fullmove_str)
+        str[idx++] = *fullmove_str;
+    str[idx++] = '\0';
+    return str;
+    #undef IF_EMPTY_PIECE_HANDLE_EMPTY_PIECE 
+}
+
 square_t board_state_get_pseudo_legal_moves_pawns(BoardState* state, bool is_white)
 {
     assert(state != NULL);
@@ -220,14 +316,14 @@ square_t board_state_get_pseudo_legal_moves_kings(BoardState* state, bool is_whi
     if (is_white)
     {
         moves |=
-            (((state->castling   & BOARD_STATE_FIELDS_CASTLING_WK) && !(all_pieces & (F1|G1)))    ? G1 : 0)
-            | (((state->castling & BOARD_STATE_FIELDS_CASTLING_WQ) && !(all_pieces & (B1|C1|D1))) ? C1 : 0);
+            (((state->fields   & BOARD_STATE_FIELDS_CASTLING_WK) && !(all_pieces & (F1|G1)))    ? G1 : 0)
+            | (((state->fields & BOARD_STATE_FIELDS_CASTLING_WQ) && !(all_pieces & (B1|C1|D1))) ? C1 : 0);
     }
     else
     {
         moves |=
-            (((state->castling   & BOARD_STATE_FIELDS_CASTLING_BK) && !(all_pieces & (F8|G8)))    ? G8 : 0)
-            | (((state->castling & BOARD_STATE_FIELDS_CASTLING_BQ) && !(all_pieces & (B8|C8|D8))) ? C8 : 0);
+            (((state->fields   & BOARD_STATE_FIELDS_CASTLING_BK) && !(all_pieces & (F8|G8)))    ? G8 : 0)
+            | (((state->fields & BOARD_STATE_FIELDS_CASTLING_BQ) && !(all_pieces & (B8|C8|D8))) ? C8 : 0);
     }
     return moves;
 }
