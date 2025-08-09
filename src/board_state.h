@@ -25,9 +25,8 @@ void board_state_to_fen_string(const BoardState* state, char* str, size_t str_si
 
 typedef struct
 {
-    piece_t piece;
     square_t from,to;
-    piece_t removed_piece;
+    piece_t from_piece,to_piece;
     uint8_t queening;
 } Move;
 
@@ -38,6 +37,8 @@ typedef struct
     + 3  /* en passant */ \
     + 4  /* halfmove clock */ \
     + 21 /* fullmove count */
+#define BOARD_STATE_MOVES_PIECES_SIZE 64
+#define BOARD_STATE_MOVES_SIZE 256
 
 static const uint8_t BOARD_STATE_FIELDS_CASTLING_WK    = 1ULL << 0;
 static const uint8_t BOARD_STATE_FIELDS_CASTLING_WQ    = 1ULL << 1;
@@ -51,13 +52,21 @@ static const uint8_t MOVE_QUEENING_CHOICE_B = 1ULL << 1;
 static const uint8_t MOVE_QUEENING_CHOICE_R = 1ULL << 2;
 static const uint8_t MOVE_QUEENING_CHOICE_Q = 1ULL << 3;
 
-square_t board_state_get_pseudo_legal_moves_pawns(BoardState* state, bool is_white);
-square_t board_state_get_pseudo_legal_moves_knights(BoardState* state, bool is_white);
-square_t board_state_get_pseudo_legal_moves_bishops(BoardState* state, bool is_white);
-square_t board_state_get_pseudo_legal_moves_rooks(BoardState* state, bool is_white);
-square_t board_state_get_pseudo_legal_moves_queens(BoardState* state, bool is_white);
-square_t board_state_get_pseudo_legal_moves_kings(BoardState* state, bool is_white);
-square_t board_state_get_pseudo_legal_moves(BoardState* state, square_t from);
+square_t board_state_get_pseudo_legal_squares_pawns(BoardState* state, bool is_white, square_t selection);
+square_t board_state_get_pseudo_legal_squares_knights(BoardState* state, bool is_white, square_t selection);
+square_t board_state_get_pseudo_legal_squares_bishops(BoardState* state, bool is_white, square_t selection);
+square_t board_state_get_pseudo_legal_squares_rooks(BoardState* state, bool is_white, square_t selection);
+square_t board_state_get_pseudo_legal_squares_queens(BoardState* state, bool is_white, square_t selection);
+square_t board_state_get_pseudo_legal_squares_kings(BoardState* state, bool is_white, square_t selection);
+
+size_t board_state_get_pseudo_legal_moves_pawns(BoardState* state, bool is_white, Move* moves, size_t moves_size);
+void board_state_get_pseudo_legal_moves_knights(BoardState* state, bool is_white, Move* moves, size_t moves_size);
+void board_state_get_pseudo_legal_moves_bishops(BoardState* state, bool is_white, Move* moves, size_t moves_size);
+void board_state_get_pseudo_legal_moves_rooks(BoardState* state, bool is_white, Move* moves, size_t moves_size);
+void board_state_get_pseudo_legal_moves_queens(BoardState* state, bool is_white, Move* moves, size_t moves_size);
+void board_state_get_pseudo_legal_moves_kings(BoardState* state, bool is_white, Move* moves, size_t moves_size);
+
+void board_state_get_pseudo_moves_squares(BoardState* state, square_t from, Move* moves, size_t moves_size);
 
 #endif // BOARD_STATE_H
 

@@ -15,5 +15,6 @@ void uint64_to_string(uint64_t n, char* str, size_t str_size)
     assert(str != NULL);
     assert(str_size >= UINT64_TO_STRING_SIZE);
     snprintf(str, str_size, "%llu", n);
+    str[str_size-1] = '\0';
 }
 
