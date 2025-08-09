@@ -6,7 +6,7 @@
 
 #include "utils.h"
 
-char* board_state_to_fen_string(const BoardState* state)
+void board_state_to_fen_string(const BoardState* state, char* str, size_t str_size)
 {
     #define IF_EMPTY_PIECE_HANDLE_EMPTY_PIECE \
         if (empty_counter) \
@@ -15,16 +15,9 @@ char* board_state_to_fen_string(const BoardState* state)
             empty_counter = 0; \
         }
     assert(state != NULL);
+    assert(str != NULL);
+    assert(str_size >= BOARD_STATE_TO_FEN_STRING_SIZE);
     const Bitboard* board = &state->board;
-    #define STR_SIZE \
-        RANK_SIZE*FILE_SIZE + (FILE_SIZE-1) /* piece placement data */ \
-        + 2  /* active color */ \
-        + 5  /* castling */ \
-        + 3  /* en passant */ \
-        + 4  /* halfmove clock */ \
-        + 21 /* fullmove count */
-    static char str[STR_SIZE] = {0};
-    #undef STR_SIZE
     // piece placement data
     uint64_t empty_counter = 0;
     uint64_t file_num = FILE_SIZE;
@@ -79,7 +72,8 @@ char* board_state_to_fen_string(const BoardState* state)
     str[idx++] = ' ';
     if (state->en_passant_square)
     {
-        const char* square_str = square_to_string(state->en_passant_square);
+        char square_str[SQUARE_TO_STRING_SIZE];
+        square_to_string(state->en_passant_square, square_str, SQUARE_TO_STRING_SIZE);
         str[idx++] = square_str[0];
         str[idx++] = square_str[1];
     }
@@ -89,14 +83,17 @@ char* board_state_to_fen_string(const BoardState* state)
     }
     // halfmove clock
     str[idx++] = ' ';
-    for (char* halfmove_str = uint64_to_string(state->halfmove_clock); *halfmove_str != '\0'; ++halfmove_str)
-        str[idx++] = *halfmove_str;
+    char halfmove_str[UINT64_TO_STRING_SIZE];
+    uint64_to_string(state->halfmove_clock, halfmove_str, UINT64_TO_STRING_SIZE);
+    for (char* ptr = halfmove_str; *ptr != '\0'; ++ptr)
+        str[idx++] = *ptr;
     // fullmove count
     str[idx++] = ' ';
-    for (char* fullmove_str = uint64_to_string(state->fullmove_count); *fullmove_str != '\0'; ++fullmove_str)
-        str[idx++] = *fullmove_str;
+    char fullmove_str[UINT64_TO_STRING_SIZE];
+    uint64_to_string(state->fullmove_count, fullmove_str, UINT64_TO_STRING_SIZE);
+    for (char* ptr = fullmove_str; *ptr != '\0'; ++ptr)
+        str[idx++] = *ptr;
     str[idx++] = '\0';
-    return str;
     #undef IF_EMPTY_PIECE_HANDLE_EMPTY_PIECE 
 }
 

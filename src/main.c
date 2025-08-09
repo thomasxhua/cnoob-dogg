@@ -22,11 +22,13 @@ int main()
     
     BoardState state = {0};
     Bitboard* board = &state.board;
-    state.fields |= BOARD_STATE_FIELDS_ACTIVE_COLOR_W;
-    state.fields |= BOARD_STATE_FIELDS_CASTLING;
-    state.fullmove_count = 420;
-    state.halfmove_clock = 69;
-#if 1
+    state.fields |=
+        BOARD_STATE_FIELDS_CASTLING_WK
+        | BOARD_STATE_FIELDS_CASTLING_WQ
+        | BOARD_STATE_FIELDS_CASTLING_BK;
+    state.fullmove_count = 1 + (moves_size >> 2);
+    state.halfmove_clock = 0;
+
     bitboard_set_starting_position(board);
     for (size_t i=0; i<moves_size; ++i)
     {
@@ -35,20 +37,22 @@ int main()
         const uint64_t to     = moves[++i];
         const piece_t removed = bitboard_move(board,from,to);
         const square_t annotation = board_state_get_pseudo_legal_moves_kings(&state, !is_white);
-        printf("\n%s\n%s-%s, removed: [%c]\nFEN: \'%s\'",
-            bitboard_to_string_annotated(board, annotation),
-            square_to_string(from),
-            square_to_string(to),
+        
+        char str_bitboard[BITBOARD_TO_STRING_SIZE];
+        char str_from[SQUARE_TO_STRING_SIZE];
+        char str_to[SQUARE_TO_STRING_SIZE];
+        char str_fen[BOARD_STATE_TO_FEN_STRING_SIZE];
+        bitboard_to_string_annotated(board, annotation, str_bitboard, BITBOARD_TO_STRING_SIZE);
+        square_to_string(from, str_from, SQUARE_TO_STRING_SIZE);
+        square_to_string(to, str_to, SQUARE_TO_STRING_SIZE);
+        board_state_to_fen_string(&state, str_fen, BOARD_STATE_TO_FEN_STRING_SIZE);
+        printf("\n%s\n%s-%s, removed: [%c]\nFEN: \'%s\'\n",
+            str_bitboard,
+            str_from,
+            str_to,
             piece_to_char(removed),
-            board_state_to_fen_string(&state));
+            str_fen);
     }
-#else
-    board->k |= F5;
-    board->n |= F4|E5;
-    board->w |= F4;
-    const square_t annotation = board_state_get_pseudo_legal_moves_kings(&state, false);
-    printf("%s\n", bitboard_to_string_annotated(board, annotation));
-#endif
 
     return 0;
 }

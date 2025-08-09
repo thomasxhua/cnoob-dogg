@@ -21,7 +21,7 @@ typedef struct
     uint8_t fields;
 } BoardState;
 
-char* board_state_to_fen_string(const BoardState* state);
+void board_state_to_fen_string(const BoardState* state, char* str, size_t str_size);
 
 typedef struct
 {
@@ -30,6 +30,14 @@ typedef struct
     piece_t removed_piece;
     uint8_t queening;
 } Move;
+
+#define BOARD_STATE_TO_FEN_STRING_SIZE \
+    RANK_SIZE*FILE_SIZE + (FILE_SIZE-1) /* piece placement data */ \
+    + 2  /* active color */ \
+    + 5  /* castling */ \
+    + 3  /* en passant */ \
+    + 4  /* halfmove clock */ \
+    + 21 /* fullmove count */
 
 static const uint8_t BOARD_STATE_FIELDS_CASTLING_WK    = 1ULL << 0;
 static const uint8_t BOARD_STATE_FIELDS_CASTLING_WQ    = 1ULL << 1;

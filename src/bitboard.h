@@ -74,10 +74,13 @@ static const square_t BOARD_QUEENSIDE = FILE_A|FILE_B|FILE_C|FILE_D;
 static const square_t BOARD_KINGSIDE  = FILE_E|FILE_F|FILE_G|FILE_H;
 static const square_t BOARD_EDGE      = RANK_1|RANK_8|FILE_A|FILE_H;
 
-char* square_to_string(square_t square);
+#define SQUARE_TO_STRING_SIZE 3
+#define BITBOARD_TO_STRING_SIZE (BOARD_SIZE*2 + RANK_SIZE + 1)
 
-char* bitboard_to_string_annotated(const Bitboard* board, square_t annotation);
-char* bitboard_to_string(const Bitboard* board);
+void square_to_string(square_t square, char* str, size_t str_size);
+
+void bitboard_to_string_annotated(const Bitboard* board, square_t annotation, char* str, size_t str_size);
+void bitboard_to_string(const Bitboard* board, char* str, size_t str_size);
 piece_t bitboard_get_piece(const Bitboard* board, square_t square);
 square_t bitboard_get_all_pieces(const Bitboard* board);
 

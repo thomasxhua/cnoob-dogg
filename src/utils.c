@@ -1,6 +1,7 @@
 #include "utils.h"
 
 #include <stdio.h>
+#include <assert.h>
 
 // "Determining if an integer is a power of 2", Anderson, _Bit Twiddling Hacks_
 // http://www.graphics.stanford.edu/~seander/bithacks.html#DetermineIfPowerOf2
@@ -9,10 +10,10 @@ bool is_power_of_two(uint64_t n)
     return n && !(n & (n - 1));
 }
 
-char* uint64_to_string(uint64_t n)
+void uint64_to_string(uint64_t n, char* str, size_t str_size)
 {
-    static char str[21] = {0};
-    snprintf(str, sizeof(str), "%llu", n);
-    return str;
+    assert(str != NULL);
+    assert(str_size >= UINT64_TO_STRING_SIZE);
+    snprintf(str, str_size, "%llu", n);
 }
 

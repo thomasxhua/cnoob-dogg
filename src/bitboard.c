@@ -7,11 +7,13 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-char* square_to_string(square_t square)
+void square_to_string(square_t square, char* str, size_t str_size)
 {
+    assert(str != NULL);
+    assert(str_size >= SQUARE_TO_STRING_SIZE);
     switch (square)
     {
-        #define _SQ(x,y) case 1ULL << y: return x;
+        #define _SQ(x,y) case 1ULL << y: str[0] = x[0]; str[1] = x[1]; str[2] = '\0'; break;
         _SQ("a1",000) _SQ("b1",001) _SQ("c1",002) _SQ("d1",003) _SQ("e1",004) _SQ("f1",005) _SQ("g1",006) _SQ("h1",007)
         _SQ("a2",010) _SQ("b2",011) _SQ("c2",012) _SQ("d2",013) _SQ("e2",014) _SQ("f2",015) _SQ("g2",016) _SQ("h2",017)
         _SQ("a3",020) _SQ("b3",021) _SQ("c3",022) _SQ("d3",023) _SQ("e3",024) _SQ("f3",025) _SQ("g3",026) _SQ("h3",027)
@@ -21,14 +23,15 @@ char* square_to_string(square_t square)
         _SQ("a7",060) _SQ("b7",061) _SQ("c7",062) _SQ("d7",063) _SQ("e7",064) _SQ("f7",065) _SQ("g7",066) _SQ("h7",067)
         _SQ("a8",070) _SQ("b8",071) _SQ("c8",072) _SQ("d8",073) _SQ("e8",074) _SQ("f8",075) _SQ("g8",076) _SQ("h8",077)
         #undef _SQ
-        default: return "??";
+       default: str[0] = '\0';
     }
 }
 
-char* bitboard_to_string_annotated(const Bitboard* board, square_t annotation)
+void bitboard_to_string_annotated(const Bitboard* board, square_t annotation, char* str, size_t str_size)
 {
     assert(board != NULL);
-    static char str[BOARD_SIZE*2 + RANK_SIZE + 1] = {0};
+    assert(str != NULL);
+    assert(str_size >= BITBOARD_TO_STRING_SIZE);
     uint64_t file_num = FILE_SIZE;
     square_t square   = 1ULL << (file_num * RANK_SIZE);
     size_t idx        = 0;
@@ -44,12 +47,11 @@ char* bitboard_to_string_annotated(const Bitboard* board, square_t annotation)
         str[idx++] = (square & annotation) ? '*' : '.';
         square <<= 1;
     }
-    return str;
 }
 
-char* bitboard_to_string(const Bitboard* board)
+void bitboard_to_string(const Bitboard* board, char* str, size_t str_size)
 {
-    return bitboard_to_string_annotated(board, 0);
+    bitboard_to_string_annotated(board, 0, str, str_size);
 }
 
 piece_t bitboard_get_piece(const Bitboard* board, square_t square)
