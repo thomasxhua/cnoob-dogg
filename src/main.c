@@ -25,8 +25,8 @@ int main()
     state.fields |=
         BOARD_STATE_FIELDS_CASTLING_WK
         | BOARD_STATE_FIELDS_CASTLING_WQ
-        | BOARD_STATE_FIELDS_CASTLING_BK;
-    state.fields |= BOARD_STATE_FIELDS_ACTIVE_COLOR_W;
+        | BOARD_STATE_FIELDS_CASTLING_BK
+        | BOARD_STATE_FIELDS_ACTIVE_COLOR_W;
     state.fullmove_count = 1 + (moves_size >> 2);
     state.halfmove_clock = 0;
 
@@ -37,13 +37,12 @@ int main()
         const uint64_t from   = moves[i];
         const uint64_t to     = moves[++i];
         const piece_t removed = bitboard_move(board,from,to);
-        const square_t annotation = board_state_get_pseudo_legal_squares_kings(&state, !is_white, 0);
         
         char str_bitboard[BITBOARD_TO_STRING_SIZE];
         char str_from[SQUARE_TO_STRING_SIZE];
         char str_to[SQUARE_TO_STRING_SIZE];
         char str_fen[BOARD_STATE_TO_FEN_STRING_SIZE];
-        bitboard_to_string_annotated(board, annotation, str_bitboard, BITBOARD_TO_STRING_SIZE);
+        bitboard_to_string_annotated(board, 0, str_bitboard, BITBOARD_TO_STRING_SIZE);
         square_to_string(from, str_from, SQUARE_TO_STRING_SIZE);
         square_to_string(to, str_to, SQUARE_TO_STRING_SIZE);
         board_state_to_fen_string(&state, str_fen, BOARD_STATE_TO_FEN_STRING_SIZE);
@@ -54,16 +53,18 @@ int main()
             piece_to_char(removed),
             str_fen);
         Move moves[BOARD_STATE_MOVES_PIECES_SIZE];
-        const size_t length = board_state_get_pseudo_legal_moves_pawns(&state, is_white, moves, BOARD_STATE_MOVES_PIECES_SIZE);
+        const size_t length = board_state_get_pseudo_legal_moves(&state, is_white, moves, BOARD_STATE_MOVES_PIECES_SIZE);
         for (size_t i=0; i<length; ++i)
         {
+            if (i && i % 10 == 0)
+                printf("\n");
             char str_from_moves[SQUARE_TO_STRING_SIZE];
             char str_to_moves[SQUARE_TO_STRING_SIZE];
             square_to_string(moves[i].from, str_from_moves, SQUARE_TO_STRING_SIZE);
             square_to_string(moves[i].to, str_to_moves, SQUARE_TO_STRING_SIZE);
-            printf("%s, ", str_to_moves);
+            printf("%c%s-%s, ", piece_to_char(moves[i].from_piece), str_from_moves, str_to_moves);
         }
-        printf("\n");
+        printf("\ntotal: %llu\n", length);
     }
 
     return 0;

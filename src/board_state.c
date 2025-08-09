@@ -98,7 +98,7 @@ void board_state_to_fen_string(const BoardState* state, char* str, size_t str_si
     str[idx++] = '\0';
 }
 
-square_t board_state_get_pseudo_legal_squares_pawns(BoardState* state, bool is_white, square_t selection)
+square_t board_state_get_pseudo_legal_squares_pawns(const BoardState* state, bool is_white, square_t selection)
 {
     assert(state != NULL);
     const Bitboard* board = &state->board;
@@ -128,7 +128,7 @@ square_t board_state_get_pseudo_legal_squares_pawns(BoardState* state, bool is_w
     return moves_once | moves_twice | attacks | state->en_passant_square;
 }
 
-square_t board_state_get_pseudo_legal_squares_knights(BoardState* state, bool is_white, square_t selection)
+square_t board_state_get_pseudo_legal_squares_knights(const BoardState* state, bool is_white, square_t selection)
 {
     assert(state != NULL);
     const Bitboard* board = &state->board;
@@ -150,7 +150,7 @@ square_t board_state_get_pseudo_legal_squares_knights(BoardState* state, bool is
         | (own_knights & ~(FILE_H        | RANK_1|RANK_2)) >> ((2 * RANK_SIZE) - 1)); // SE
 }
 
-square_t get_pseudo_legal_squares_bishops(BoardState* state, bool is_white, square_t piece)
+square_t get_pseudo_legal_squares_bishops(const BoardState* state, bool is_white, square_t piece)
 {
     assert(state != NULL);
     const Bitboard* board          = &state->board;
@@ -208,13 +208,13 @@ square_t get_pseudo_legal_squares_bishops(BoardState* state, bool is_white, squa
     return moves;
 }
 
-square_t board_state_get_pseudo_legal_squares_bishops(BoardState* state, bool is_white, square_t selection)
+square_t board_state_get_pseudo_legal_squares_bishops(const BoardState* state, bool is_white, square_t selection)
 {
     assert(state != NULL);
     return get_pseudo_legal_squares_bishops(state, is_white, selection & state->board.b);
 }
 
-square_t get_pseudo_legal_squares_rooks(BoardState* state, bool is_white, square_t piece)
+square_t get_pseudo_legal_squares_rooks(const BoardState* state, bool is_white, square_t piece)
 {
     assert(state != NULL);
     const Bitboard* board          = &state->board;
@@ -272,13 +272,13 @@ square_t get_pseudo_legal_squares_rooks(BoardState* state, bool is_white, square
     return moves;
 }
 
-square_t board_state_get_pseudo_legal_squares_rooks(BoardState* state, bool is_white, square_t selection)
+square_t board_state_get_pseudo_legal_squares_rooks(const BoardState* state, bool is_white, square_t selection)
 {
     assert(state != NULL);
     return get_pseudo_legal_squares_rooks(state, is_white, selection & state->board.r);
 }
 
-square_t board_state_get_pseudo_legal_squares_queens(BoardState* state, bool is_white, square_t selection)
+square_t board_state_get_pseudo_legal_squares_queens(const BoardState* state, bool is_white, square_t selection)
 {
     assert(state != NULL);
     return
@@ -286,7 +286,7 @@ square_t board_state_get_pseudo_legal_squares_queens(BoardState* state, bool is_
         | get_pseudo_legal_squares_rooks(state, is_white, selection & state->board.q);
 }
 
-square_t board_state_get_pseudo_legal_squares_kings(BoardState* state, bool is_white, square_t selection)
+square_t board_state_get_pseudo_legal_squares_kings(const BoardState* state, bool is_white, square_t selection)
 {
     assert(state != NULL);
     const Bitboard* board     = &state->board;
@@ -328,63 +328,72 @@ square_t board_state_get_pseudo_legal_squares_kings(BoardState* state, bool is_w
     return moves;
 }
 
-size_t board_state_get_pseudo_legal_moves_pawns(BoardState* state, bool is_white, Move* moves, size_t moves_size)
+#define BOARD_STATE_GET_PSEUDO_LEGAL_MOVES_PIECE(name, lowercase, uppercase) \
+    size_t board_state_get_pseudo_legal_moves_##name(const BoardState* state, bool is_white, Move* moves, size_t moves_size) \
+    { \
+        assert(state != NULL); \
+        assert(moves != NULL); \
+        assert(moves_size <= BOARD_STATE_MOVES_PIECES_SIZE); \
+        const Bitboard* board     = &state->board; \
+        const square_t own_##name = board->lowercase & (is_white ? board->w : ~board->w); \
+        size_t idx = 0; \
+        for (square_t from = 1ULL; from; from <<= 1) \
+        { \
+            if (!(from & own_##name)) \
+                continue; \
+            const square_t square_moves = board_state_get_pseudo_legal_squares_##name(state, is_white, from); \
+            for (square_t to = 1ULL; to; to <<= 1) \
+            { \
+                if (!(to & square_moves)) \
+                    continue; \
+                const piece_t to_piece = bitboard_get_piece(board, to); \
+                moves[idx++] = (Move) \
+                { \
+                    .from_piece = is_white ? PIECE_W##uppercase : PIECE_B##uppercase, \
+                    .to_piece   = to_piece, \
+                    .from       = from, \
+                    .to         = to \
+                }; \
+            } \
+        } \
+        return idx; \
+    }
+BOARD_STATE_GET_PSEUDO_LEGAL_MOVES_PIECE(pawns, p, P)
+BOARD_STATE_GET_PSEUDO_LEGAL_MOVES_PIECE(knights, n, N)
+BOARD_STATE_GET_PSEUDO_LEGAL_MOVES_PIECE(bishops, b, B)
+BOARD_STATE_GET_PSEUDO_LEGAL_MOVES_PIECE(rooks, r, R)
+BOARD_STATE_GET_PSEUDO_LEGAL_MOVES_PIECE(queens, q, Q)
+BOARD_STATE_GET_PSEUDO_LEGAL_MOVES_PIECE(kings, k, K)
+#undef BOARD_STATE_GET_PSEUDO_LEGAL_MOVES_PIECE
+
+size_t board_state_get_pseudo_legal_moves(const BoardState* state, bool is_white, Move* moves, size_t moves_size)
 {
     assert(state != NULL);
     assert(moves != NULL);
-    assert(moves_size <= BOARD_STATE_MOVES_PIECES_SIZE);
-    const Bitboard* board    = &state->board;
-    const square_t own_pawns = board->p & (is_white ? board->w : ~board->w);
+    assert(moves_size <= BOARD_STATE_MOVES_SIZE);
+    if (is_white)
+        moves->fields |= MOVE_FIELDS_ACTIVE_COLOR_W;
+    else
+        moves->fields &= ~MOVE_FIELDS_ACTIVE_COLOR_W;
     size_t idx = 0;
-    for (square_t from = 1ULL; from; from <<= 1)
-    {
-        if (!(from & own_pawns))
-            continue;
-        const square_t square_moves = board_state_get_pseudo_legal_squares_pawns(state, is_white, from);
-        for (square_t to = 1ULL; to; to <<= 1)
-        {
-            if (!(to & square_moves))
-                continue;
-            const piece_t to_piece = bitboard_get_piece(board, to);
-            moves[idx++] = (Move)
-            {
-                .from_piece = is_white ? PIECE_WP : PIECE_BP,
-                .to_piece   = to_piece,
-                .from       = from,
-                .to         = to
-            };
-        }
-    }
+    idx += board_state_get_pseudo_legal_moves_pawns(state, is_white, moves + idx, moves_size);
+    idx += board_state_get_pseudo_legal_moves_knights(state, is_white, moves + idx, moves_size);
+    idx += board_state_get_pseudo_legal_moves_bishops(state, is_white, moves + idx, moves_size);
+    idx += board_state_get_pseudo_legal_moves_rooks(state, is_white, moves + idx, moves_size);
+    idx += board_state_get_pseudo_legal_moves_queens(state, is_white, moves + idx, moves_size);
+    idx += board_state_get_pseudo_legal_moves_kings(state, is_white, moves + idx, moves_size);
     return idx;
 }
 
-/*
-square_t board_state_get_pseudo_legal_squares(BoardState* state, square_t from)
+void board_state_pseudo_apply_move(BoardState* state, const Move* moves)
 {
     assert(state != NULL);
-    Bitboard* board = &state->board;
-    const square_t* from_piece_ptr = bitboard_get_piece_ptr(board, from);
-    if (!from_piece_ptr)
-        return 0;
-    const bool is_from_piece_white = bitboard_is_white(board, from);
-    if (from_piece_ptr == &board->p)
-        return board_state_get_pseudo_legal_squares_pawns(state, is_from_piece_white);
-    else if (from_piece_ptr == &board->n)
-        return board_state_get_pseudo_legal_squares_knights(state, is_from_piece_white);
-    else if (from_piece_ptr == &board->b)
-        return board_state_get_pseudo_legal_squares_bishops(state, is_from_piece_white);
-    else if (from_piece_ptr == &board->r)
-        return board_state_get_pseudo_legal_squares_rooks(state, is_from_piece_white);
-    else if (from_piece_ptr == &board->q)
-        return board_state_get_pseudo_legal_squares_queens(state, is_from_piece_white);
-    else if (from_piece_ptr == &board->k)
-        return board_state_get_pseudo_legal_squares_kings(state, is_from_piece_white);
-    return 0;
+    assert(moves != NULL);
+    // TODO:
+    // - add return type for execution info
+    // - handle en passant
+    // - handle pawn promotion
+    // - handle castling
+    // - check for king attacks
 }
-
-void board_state_get_pseudo_moves_squares(BoardState* state, square_t from, Move* moves, size_t moves_size)
-{
-
-}
-*/
 
