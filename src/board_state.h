@@ -20,14 +20,14 @@ typedef struct
 typedef struct
 {
     square_t from,to;
-    piece_t from_piece,to_piece;
     uint8_t fields;
-    bool is_white_to_move;
 } Move;
 
 typedef enum
 {
+    APPLY_MOVE_STATUS_OK,
     APPLY_MOVE_STATUS_ERROR_FROM_PIECE_EMPTY,
+    APPLY_MOVE_STATUS_ILLEGAL_ANY_KING_ATTACKED,
 } apply_move_status_t;
 
 #define BOARD_STATE_TO_FEN_STRING_SIZE \
@@ -40,18 +40,19 @@ typedef enum
 #define BOARD_STATE_MOVES_PIECES_SIZE 64
 #define BOARD_STATE_MOVES_SIZE 256
 
-static const uint8_t BOARD_STATE_FIELDS_CASTLING_WK    = 1ULL << 0;
-static const uint8_t BOARD_STATE_FIELDS_CASTLING_WQ    = 1ULL << 1;
-static const uint8_t BOARD_STATE_FIELDS_CASTLING_BK    = 1ULL << 2;
-static const uint8_t BOARD_STATE_FIELDS_CASTLING_BQ    = 1ULL << 3;
+static const uint8_t BOARD_STATE_FIELDS_CASTLING_WQ    = 1ULL << 0;
+static const uint8_t BOARD_STATE_FIELDS_CASTLING_WK    = 1ULL << 1;
+static const uint8_t BOARD_STATE_FIELDS_CASTLING_BQ    = 1ULL << 2;
+static const uint8_t BOARD_STATE_FIELDS_CASTLING_BK    = 1ULL << 3;
 static const uint8_t BOARD_STATE_FIELDS_CASTLING       = 0xFULL;
 static const uint8_t BOARD_STATE_FIELDS_ACTIVE_COLOR_W = 1ULL << 4;
 
-static const uint8_t MOVE_FIELDS_QUEENING_CHOICE_N = 1ULL << 0;
-static const uint8_t MOVE_FIELDS_QUEENING_CHOICE_B = 1ULL << 1;
-static const uint8_t MOVE_FIELDS_QUEENING_CHOICE_R = 1ULL << 2;
-static const uint8_t MOVE_FIELDS_QUEENING_CHOICE_Q = 1ULL << 3;
-static const uint8_t MOVE_FIELDS_ACTIVE_COLOR_W    = 1ULL << 4;
+static const uint8_t MOVE_FIELDS_QUEENING_CHOICE_Q = 1ULL << 0;
+static const uint8_t MOVE_FIELDS_QUEENING_CHOICE_R = 1ULL << 1;
+static const uint8_t MOVE_FIELDS_QUEENING_CHOICE_B = 1ULL << 2;
+static const uint8_t MOVE_FIELDS_QUEENING_CHOICE_N = 1ULL << 3;
+
+static const uint64_t CASTLING_DISTANCE = 2ULL;
 
 void board_state_to_fen_string(const BoardState* state, char* str, size_t str_size);
 void board_state_copy(const BoardState* state, BoardState* other);
@@ -72,8 +73,10 @@ size_t board_state_get_pseudo_legal_moves_kings(const BoardState* state, bool is
 
 size_t board_state_get_pseudo_legal_moves(const BoardState* state, bool is_white, Move* moves, size_t moves_size);
 
-bool board_state_is_any_king_attacked(const BoardState* state, bool is_white);
-apply_move_status_t board_state_pseudo_apply_move(BoardState* state, const Move* moves);
+square_t board_state_get_attacked_kings(const BoardState* state, bool is_white);
+apply_move_status_t board_state_apply_move(BoardState* state, const Move* move);
+
+size_t board_state_get_legal_moves(const BoardState* state, bool is_white, Move* moves, size_t moves_size);
 
 #endif // BOARD_STATE_H
 

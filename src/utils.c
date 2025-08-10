@@ -2,6 +2,8 @@
 
 #include <stdio.h>
 #include <assert.h>
+#include <stdlib.h>
+#include <time.h>
 
 // "Determining if an integer is a power of 2", Anderson, _Bit Twiddling Hacks_
 // http://www.graphics.stanford.edu/~seander/bithacks.html#DetermineIfPowerOf2
@@ -17,5 +19,4 @@ void uint64_to_string(uint64_t n, char* str, size_t str_size)
     snprintf(str, str_size, "%llu", n);
     str[str_size-1] = '\0';
 }
-
 

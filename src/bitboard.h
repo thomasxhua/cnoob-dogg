@@ -61,9 +61,13 @@ piece_t bitboard_get_piece(const Bitboard* board, square_t square);
 square_t bitboard_get_all_pieces(const Bitboard* board);
 
 square_t* bitboard_get_piece_ptr(Bitboard* board, square_t square);
+const square_t* bitboard_get_piece_ptr_const(const Bitboard* board, square_t square);
 bool bitboard_is_white(Bitboard* board, square_t square);
 void bitboard_set_starting_position(Bitboard* board);
-piece_t bitboard_move(Bitboard* board, square_t from, square_t to);
+void bitboard_clear_square(Bitboard* board, square_t square);
+void bitboard_place_piece(Bitboard* board, square_t square, square_t* piece_ptr, bool is_white);
+bool bitboard_is_square_empty(Bitboard* board, square_t square);
+piece_t bitboard_move_square(Bitboard* board, square_t from, square_t to);
 
 #endif // BITBOARD_H
 
