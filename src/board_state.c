@@ -1,7 +1,6 @@
 #include "board_state.h"
 
 #include <assert.h>
-#include <stdbool.h>
 #include <stdio.h>
 
 #include "utils.h"
@@ -96,6 +95,17 @@ void board_state_to_fen_string(const BoardState* state, char* str, size_t str_si
     for (char* ptr = fullmove_str; *ptr != '\0'; ++ptr)
         str[idx++] = *ptr;
     str[idx++] = '\0';
+}
+
+void board_state_copy(const BoardState* state, BoardState* other)
+{
+    assert(state != NULL);
+    assert(other != NULL);
+    other->board             = state->board;
+    other->fullmove_count    = state->fullmove_count;
+    other->halfmove_clock    = state->halfmove_clock;
+    other->en_passant_square = state->en_passant_square;
+    other->fields            = state->fields;
 }
 
 square_t board_state_get_pseudo_legal_squares_pawns(const BoardState* state, bool is_white, square_t selection)
@@ -385,10 +395,35 @@ size_t board_state_get_pseudo_legal_moves(const BoardState* state, bool is_white
     return idx;
 }
 
-void board_state_pseudo_apply_move(BoardState* state, const Move* moves)
+bool board_state_is_any_king_attacked(const BoardState* state, bool is_white)
+{
+    assert(state != NULL);
+    const Bitboard* board = &state->board;
+    const square_t moves_pawns   = board_state_get_pseudo_legal_squares_pawns(state, !is_white, BOARD_FULL);
+    const square_t moves_knights = board_state_get_pseudo_legal_squares_knights(state, !is_white, BOARD_FULL);
+    const square_t moves_bishops = board_state_get_pseudo_legal_squares_bishops(state, !is_white, BOARD_FULL);
+    const square_t moves_rooks   = board_state_get_pseudo_legal_squares_rooks(state, !is_white, BOARD_FULL);
+    const square_t moves_queens  = board_state_get_pseudo_legal_squares_queens(state, !is_white, BOARD_FULL);
+    const square_t moves_kings   = board_state_get_pseudo_legal_squares_kings(state, !is_white, BOARD_FULL);
+    const square_t own_kings     = board->k & (is_white ? board->w : ~board->w);
+    return own_kings & (
+        moves_pawns
+        | moves_knights
+        | moves_bishops
+        | moves_rooks
+        | moves_queens
+        | moves_kings);
+}
+
+apply_move_status_t board_state_pseudo_apply_move(BoardState* state, const Move* moves)
 {
     assert(state != NULL);
     assert(moves != NULL);
+    const Bitboard* board    = &state->board;
+    const piece_t from_piece = bitboard_get_piece(board, moves->from);
+    if (from_piece == PIECE_NONE)
+        return APPLY_MOVE_STATUS_ERROR_FROM_PIECE_EMPTY;
+    return 0;
     // TODO:
     // - add return type for execution info
     // - handle en passant

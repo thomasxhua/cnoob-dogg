@@ -8,30 +8,6 @@
 
 typedef uint64_t square_t;
 
-typedef enum
-{
-    COORD_RANK_1,
-    COORD_RANK_2,
-    COORD_RANK_3,
-    COORD_RANK_4,
-    COORD_RANK_5,
-    COORD_RANK_6,
-    COORD_RANK_7,
-    COORD_RANK_8
-} coord_rank_t;
-
-typedef enum
-{
-    COORD_FILE_A,
-    COORD_FILE_B,
-    COORD_FILE_C,
-    COORD_FILE_D,
-    COORD_FILE_E,
-    COORD_FILE_F,
-    COORD_FILE_G,
-    COORD_FILE_H
-} coord_file_t;
-
 typedef struct 
 {
     square_t w,p,n,b,r,q,k;
@@ -69,7 +45,7 @@ static const square_t FILE_F = F1|F2|F3|F4|F5|F6|F7|F8;
 static const square_t FILE_G = G1|G2|G3|G4|G5|G6|G7|G8;
 static const square_t FILE_H = H1|H2|H3|H4|H5|H6|H7|H8;
 
-static const square_t BOARD_FULL      = ~1UL;
+static const square_t BOARD_FULL      = ~1ULL;
 static const square_t BOARD_QUEENSIDE = FILE_A|FILE_B|FILE_C|FILE_D;
 static const square_t BOARD_KINGSIDE  = FILE_E|FILE_F|FILE_G|FILE_H;
 static const square_t BOARD_EDGE      = RANK_1|RANK_8|FILE_A|FILE_H;
@@ -90,3 +66,4 @@ void bitboard_set_starting_position(Bitboard* board);
 piece_t bitboard_move(Bitboard* board, square_t from, square_t to);
 
 #endif // BITBOARD_H
+

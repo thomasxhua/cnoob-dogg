@@ -1,6 +1,8 @@
 #ifndef BOARD_STATE_H
 #define BOARD_STATE_H
 
+#include <stdbool.h>
+
 #include "bitboard.h"
 
 // "16.1 FEN", Edwards, _Standard: Portable Game Notation Specification and Implementation Guide_
@@ -15,8 +17,6 @@ typedef struct
     uint8_t fields;
 } BoardState;
 
-void board_state_to_fen_string(const BoardState* state, char* str, size_t str_size);
-
 typedef struct
 {
     square_t from,to;
@@ -24,6 +24,11 @@ typedef struct
     uint8_t fields;
     bool is_white_to_move;
 } Move;
+
+typedef enum
+{
+    APPLY_MOVE_STATUS_ERROR_FROM_PIECE_EMPTY,
+} apply_move_status_t;
 
 #define BOARD_STATE_TO_FEN_STRING_SIZE \
     BOARD_SIZE + (FILE_SIZE-1) /* board */ \
@@ -48,6 +53,9 @@ static const uint8_t MOVE_FIELDS_QUEENING_CHOICE_R = 1ULL << 2;
 static const uint8_t MOVE_FIELDS_QUEENING_CHOICE_Q = 1ULL << 3;
 static const uint8_t MOVE_FIELDS_ACTIVE_COLOR_W    = 1ULL << 4;
 
+void board_state_to_fen_string(const BoardState* state, char* str, size_t str_size);
+void board_state_copy(const BoardState* state, BoardState* other);
+
 square_t board_state_get_pseudo_legal_squares_pawns(const BoardState* state, bool is_white, square_t selection);
 square_t board_state_get_pseudo_legal_squares_knights(const BoardState* state, bool is_white, square_t selection);
 square_t board_state_get_pseudo_legal_squares_bishops(const BoardState* state, bool is_white, square_t selection);
@@ -64,7 +72,8 @@ size_t board_state_get_pseudo_legal_moves_kings(const BoardState* state, bool is
 
 size_t board_state_get_pseudo_legal_moves(const BoardState* state, bool is_white, Move* moves, size_t moves_size);
 
-void board_state_pseudo_apply_move(BoardState* state, const Move* moves);
+bool board_state_is_any_king_attacked(const BoardState* state, bool is_white);
+apply_move_status_t board_state_pseudo_apply_move(BoardState* state, const Move* moves);
 
 #endif // BOARD_STATE_H
 
