@@ -6,6 +6,17 @@
 
 #include "utils.h"
 
+void board_state_init(BoardState* state)
+{
+    state->fields |=
+        BOARD_STATE_FIELDS_CASTLING_WK
+        | BOARD_STATE_FIELDS_CASTLING_WQ
+        | BOARD_STATE_FIELDS_CASTLING_BK
+        | BOARD_STATE_FIELDS_CASTLING_BQ
+        | BOARD_STATE_FIELDS_ACTIVE_COLOR_W;
+    bitboard_set_starting_position(&state->board);
+}
+
 void board_state_to_fen_string(const BoardState* state, char* str, size_t str_size)
 {
     assert(state != NULL);
@@ -505,15 +516,15 @@ apply_move_status_t board_state_apply_move(BoardState* state, const Move* move)
         // handle pawn promotion
         else if (is_white && (move->to & RANK_8))
         {
-             bitboard_clear_square(board, move->from);
-             bitboard_clear_square(board, move->to);
-             bitboard_place_piece(board, move->to, queening_piece, true);
+            bitboard_clear_square(board, move->from);
+            bitboard_clear_square(board, move->to);
+            bitboard_place_piece(board, move->to, queening_piece, true);
         }
         else if (!is_white && (move->to & RANK_1))
         {
-             bitboard_clear_square(board, move->from);
-             bitboard_clear_square(board, move->to);
-             bitboard_place_piece(board, move->to, queening_piece, false);
+            bitboard_clear_square(board, move->from);
+            bitboard_clear_square(board, move->to);
+            bitboard_place_piece(board, move->to, queening_piece, false);
         }
         else
         {
@@ -588,5 +599,47 @@ size_t board_state_get_legal_moves(const BoardState* state, bool is_white, Move*
             moves[idx++] = temp_moves[i];
     }
     return idx;
+}
+
+void board_state_move_to_string(const BoardState* state, const Move* move, char* str, size_t str_size)
+{
+    assert(state != NULL);
+    assert(move != NULL);
+    const Bitboard* board     = &state->board;
+    const square_t* piece_ptr = bitboard_get_piece_ptr_const(board, move->from);
+    char piece_char =
+        (piece_ptr == &board->k) ? 'K'
+        : (piece_ptr == &board->q) ? 'Q'
+        : (piece_ptr == &board->r) ? 'R'
+        : (piece_ptr == &board->b) ? 'B'
+        : (piece_ptr == &board->n) ? 'N'
+        : (piece_ptr == &board->p) ? 'P'
+        : '?';
+    char str_from_moves[SQUARE_TO_STRING_SIZE];
+    char str_to_moves[SQUARE_TO_STRING_SIZE];
+    char str_queening[3] = {0};
+    square_to_string(move->from, str_from_moves, SQUARE_TO_STRING_SIZE);
+    square_to_string(move->to, str_to_moves, SQUARE_TO_STRING_SIZE);
+    if (move->fields == MOVE_FIELDS_QUEENING_CHOICE_Q)
+    {
+        str_queening[0] = '=';
+        str_queening[1] = 'Q';
+    }
+    if (move->fields == MOVE_FIELDS_QUEENING_CHOICE_R)
+    {
+        str_queening[0] = '=';
+        str_queening[1] = 'R';
+    }
+    if (move->fields == MOVE_FIELDS_QUEENING_CHOICE_B)
+    {
+        str_queening[0] = '=';
+        str_queening[1] = 'B';
+    }
+    if (move->fields == MOVE_FIELDS_QUEENING_CHOICE_N)
+    {
+        str_queening[0] = '=';
+        str_queening[1] = 'N';
+    }
+    snprintf(str, str_size, "%c%s-%s%s", piece_char, str_from_moves, str_to_moves, str_queening);
 }
 

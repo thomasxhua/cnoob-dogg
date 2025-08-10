@@ -39,6 +39,7 @@ typedef enum
     + 22 /* fullmove count */
 #define BOARD_STATE_MOVES_PIECES_SIZE 64
 #define BOARD_STATE_MOVES_SIZE 256
+#define BOARD_STATE_MOVE_TO_STRING_SIZE SQUARE_TO_STRING_SIZE + 1 + SQUARE_TO_STRING_SIZE + 1 + 2 + 1
 
 static const uint8_t BOARD_STATE_FIELDS_CASTLING_WQ    = 1ULL << 0;
 static const uint8_t BOARD_STATE_FIELDS_CASTLING_WK    = 1ULL << 1;
@@ -54,6 +55,7 @@ static const uint8_t MOVE_FIELDS_QUEENING_CHOICE_N = 1ULL << 3;
 
 static const uint64_t CASTLING_DISTANCE = 2ULL;
 
+void board_state_init(BoardState* state);
 void board_state_to_fen_string(const BoardState* state, char* str, size_t str_size);
 void board_state_copy(const BoardState* state, BoardState* other);
 
@@ -77,6 +79,8 @@ square_t board_state_get_attacked_kings(const BoardState* state, bool is_white);
 apply_move_status_t board_state_apply_move(BoardState* state, const Move* move);
 
 size_t board_state_get_legal_moves(const BoardState* state, bool is_white, Move* moves, size_t moves_size);
+
+void board_state_move_to_string(const BoardState* state, const Move* move, char* str, size_t str_size);
 
 #endif // BOARD_STATE_H
 
