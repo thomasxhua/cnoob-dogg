@@ -66,14 +66,33 @@ def compare_dicts(a,b):
                 diffs.append((key,a_val,b_val))
     return a_minus_b,b_minus_a,diffs
 
-def stockfish_cnoobdogg(depth, moves):
+def stockfish_cnoobdogg(depth, moves=[], fen="", stockfish_verbose=False, cnoobdogg_verbose=False):
     stockfish = open_process([stockfish_path])
-    cnoobdogg = open_process([cnoobdogg_path, "perft", str(depth)] + moves)
-    send_command(stockfish, f"position startpos moves {" ".join(moves)}")
+    cnoobdogg_cmd = ["perft" if (fen == "") else "perft-fen"] + [str(depth)]
+    if fen != "":
+        cnoobdogg_cmd.append(fen)
+    cnoobdogg_cmd += moves
+    cnoobdogg = open_process([cnoobdogg_path] + (["perft", str(depth)] if (fen == "") else ["perft-fen", str(depth), fen]) + moves)
+    if (fen != ""):
+        send_command(stockfish, f"position fen {fen} moves {" ".join(moves)}")
+    else:
+        send_command(stockfish, f"position startpos moves {" ".join(moves)}")
     send_command(stockfish, f"go perft {depth}")
     send_command(stockfish, "quit")
-    stockfish_dict = lines_to_dict(get_lines(stockfish))
-    cnoobdogg_dict = lines_to_dict(get_lines(cnoobdogg))
+    stockfish_lines = get_lines(stockfish)
+    cnoobdogg_lines = get_lines(cnoobdogg)
+    if stockfish_verbose:
+        print("----- stockfish execution -----")
+        for line in stockfish_lines:
+            print(line, end="")
+        print("\n------------------------------")
+    if cnoobdogg_verbose:
+        print("----- cnoobdogg execution -----")
+        for line in cnoobdogg_lines:
+            print(line, end="")
+        print("\n------------------------------")
+    stockfish_dict = lines_to_dict(stockfish_lines)
+    cnoobdogg_dict = lines_to_dict(cnoobdogg_lines)
     stockfish_uniques,cnoobdogg_uniques,diffs = compare_dicts(stockfish_dict, cnoobdogg_dict)
     print("===   Stockfish Uniques   ===")
     for move in stockfish_uniques:
@@ -88,10 +107,13 @@ def stockfish_cnoobdogg(depth, moves):
         idx += 1
     close_process(stockfish)
     close_process(cnoobdogg)
+    stockfish_total = sum(stockfish_dict.values())
+    cnoobdogg_total = sum(cnoobdogg_dict.values())
     print(f"Move list: [{" ".join(moves)}]")
-    if idx != 0:
-        chosen_idx = int(input(f"Chase move [n]: "))
-        stockfish_cnoobdogg(depth - 1, moves + [diffs[chosen_idx][0]])
+    print(f"Stockfish: {stockfish_total}")
+    print(f"cnoobdogg: {cnoobdogg_total}")
+    chosen_idx = int(input(f"Chase move [n]: "))
+    stockfish_cnoobdogg(depth - 1, moves + [diffs[chosen_idx][0]], fen)
 
 def print_move(move):
     squares,count = move
@@ -100,8 +122,9 @@ def print_move(move):
 if not os.path.isfile(stockfish_path):
     print(f"Please provide a stockfish binary not found under {stockfish_path}.")
 
-depth = 5
-moves = ["c2c3", "f7f5", "a2a3", "f5f4", "e2e4", "f4e3"]
+depth = 4
+moves = []
+fen   = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 0"
 
-stockfish_cnoobdogg(depth, moves)
+stockfish_cnoobdogg(depth, moves, fen)
 

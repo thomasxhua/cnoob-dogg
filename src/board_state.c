@@ -164,6 +164,7 @@ void board_state_set_fen_string(BoardState* state, char* str, size_t str_size)
             switch (str[i])
             {
                 case 'w': state->fields |= BOARD_STATE_FIELDS_ACTIVE_COLOR_W; break;
+                case 'b': state->fields &= ~BOARD_STATE_FIELDS_ACTIVE_COLOR_W; break;
                 case ' ': is_active_color_done = true; break;
                 default:  break;
             }
@@ -610,7 +611,6 @@ apply_move_status_t board_state_apply_move(BoardState* state, const Move* move)
     // -- handle move --
     if (from_piece == &board->p)
     {
-
         square_t* queening_piece =
             (move->fields & MOVE_FIELDS_QUEENING_CHOICE_Q)   ? &board->q
             : (move->fields & MOVE_FIELDS_QUEENING_CHOICE_R) ? &board->r

@@ -78,3 +78,13 @@ size_t perft_test(uint64_t depth, Move* moves, size_t moves_size, perft_test_ver
     return total_size;
 }
 
+size_t perft_test_fen(uint64_t depth, char* str, size_t str_size, perft_test_verbose_t verbose)
+{
+    BoardState state = {0};
+    board_state_set_fen_string(&state, str, str_size);
+    const size_t total_size = perft_board_state_test(&state, depth, verbose == PERFT_TEST_VERBOSE_ALL);
+    if (verbose != PERFT_TEST_VERBOSE_NONE)
+        printf("total_size(depth=%llu): %llu\n", depth, total_size);
+    return total_size;
+}
+
