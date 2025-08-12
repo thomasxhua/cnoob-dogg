@@ -25,9 +25,6 @@ size_t perft_board_state_count(const BoardState* state, uint64_t depth)
             return 0;
         }
         const size_t res = perft_board_state_count(&copy, depth-1);
-        char from_str[SQUARE_TO_STRING_SIZE], to_str[SQUARE_TO_STRING_SIZE];
-        square_to_string(moves[i].from, from_str, SQUARE_TO_STRING_SIZE);
-        square_to_string(moves[i].to, to_str, SQUARE_TO_STRING_SIZE);
         sum += res;
     }
     return sum;
@@ -58,7 +55,21 @@ size_t perft_board_state_test(const BoardState* state, uint64_t depth, bool is_p
         square_to_string(moves[i].from, from_str, SQUARE_TO_STRING_SIZE);
         square_to_string(moves[i].to, to_str, SQUARE_TO_STRING_SIZE);
         if (is_printing_each_node)
-            printf("%s%s: %llu\n", from_str, to_str, res);
+        {
+            char castling = ' ';
+            if (moves[i].fields & MOVE_FIELDS_QUEENING_CHOICE_Q)
+                castling = 'q';
+            else if (moves[i].fields & MOVE_FIELDS_QUEENING_CHOICE_R)
+                castling = 'r';
+            else if (moves[i].fields & MOVE_FIELDS_QUEENING_CHOICE_B)
+                castling = 'b';
+            else if (moves[i].fields & MOVE_FIELDS_QUEENING_CHOICE_N)
+                castling = 'n';
+            if (castling != ' ')
+                printf("%s%s%c: %llu\n", from_str, to_str, castling, res);
+            else
+                printf("%s%s: %llu\n", from_str, to_str, res);
+        }
     }
     return sum;
 }
