@@ -112,8 +112,9 @@ def stockfish_cnoobdogg(depth, moves=[], fen="", stockfish_verbose=False, cnoobd
     print(f"Move list: [{" ".join(moves)}]")
     print(f"Stockfish: {stockfish_total}")
     print(f"cnoobdogg: {cnoobdogg_total}")
-    chosen_idx = int(input(f"Chase move [n]: "))
-    stockfish_cnoobdogg(depth - 1, moves + [diffs[chosen_idx][0]], fen)
+    if (idx > 0):
+        chosen_idx = int(input(f"Chase move [n]: "))
+        stockfish_cnoobdogg(depth - 1, moves + [diffs[chosen_idx][0]], fen, stockfish_verbose, cnoobdogg_verbose)
 
 def print_move(move):
     squares,count = move
@@ -126,5 +127,5 @@ depth = 4
 moves = []
 fen   = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 0"
 
-stockfish_cnoobdogg(depth, moves, fen)
+stockfish_cnoobdogg(depth, moves, fen, False, True)
 

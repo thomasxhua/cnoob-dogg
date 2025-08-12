@@ -117,6 +117,8 @@ int main(int argc, char* argv[])
             free(moves);
             char fen_str[BOARD_STATE_SET_FEN_STRING_SIZE];
             board_state_to_fen_string(&state, fen_str, BOARD_STATE_TO_FEN_STRING_SIZE);
+            board_state_print(&state, 0);
+            printf("\n");
             perft_test_fen(depth, fen_str, BOARD_STATE_TO_FEN_STRING_SIZE, PERFT_TEST_VERBOSE_ALL);
         }
         else

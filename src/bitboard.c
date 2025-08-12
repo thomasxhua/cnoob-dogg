@@ -179,11 +179,8 @@ void bitboard_clear_square(Bitboard* board, square_t square)
 void bitboard_place_piece(Bitboard* board, square_t square, square_t* piece_ptr, bool is_white)
 {
     assert(board != NULL);
-    if (!piece_ptr)
-    {
-        bitboard_clear_square(board, square);
-        return;
-    }
+    assert(piece_ptr != NULL);
+    bitboard_clear_square(board, square);
     if (is_white)
         board->w |= square;
     *piece_ptr |= square;

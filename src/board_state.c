@@ -650,17 +650,17 @@ apply_move_status_t board_state_apply_move(BoardState* state, const Move* move)
     // handle castling
     else if (from_piece == &board->k && square_log2_diff(move->from, move->to) == 2)
     {
-        #define HANDLE_CASTLING(color, direction, clear_range_min, clear_range_max, king_square, rook_square) \
-            if (color && (move->from direction move->to)) \
+        #define HANDLE_CASTLING(cond, direction, clear_range_min, clear_range_max, king_square, rook_square) \
+            if (cond && move->from direction move->to) \
             { \
                 for (square_t square = clear_range_min; square != clear_range_max << 1; square <<= 1) \
                     bitboard_clear_square(board, square); \
-                bitboard_place_piece(board, king_square, &board->k, color); \
-                bitboard_place_piece(board, rook_square, &board->r, color); \
+                bitboard_place_piece(board, king_square, &board->k, is_white); \
+                bitboard_place_piece(board, rook_square, &board->r, is_white); \
             }
-        HANDLE_CASTLING(is_white, >, A1, E1, C1, D1)       // WQ
-        else HANDLE_CASTLING(is_white, <, E1, H1, G1, F1)  // WK
+        HANDLE_CASTLING(is_white, >, A1, E1, C1, D1)      // WQ
         else HANDLE_CASTLING(!is_white, >, A8, E8, C8, D8) // BQ
+        else HANDLE_CASTLING(is_white, <, E1, H1, G1, F1) // WK
         else HANDLE_CASTLING(!is_white, <, E8, H8, G8, F8) // BK
         else bitboard_move_square(board, move->from, move->to);
         #undef HANDLE_CASTLING
