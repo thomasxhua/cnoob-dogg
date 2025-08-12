@@ -8,6 +8,7 @@
 
 bool is_power_of_two(uint64_t n);
 void uint64_to_string(uint64_t n, char* str, size_t str_size);
+uint64_t abs_diff(uint64_t a, uint64_t b);
 
 #endif // UTILS_H
 

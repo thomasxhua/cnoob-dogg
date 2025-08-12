@@ -58,8 +58,10 @@ static const uint64_t CASTLING_DISTANCE = 2ULL;
 void board_state_init(BoardState* state);
 void board_state_to_fen_string(const BoardState* state, char* str, size_t str_size);
 void board_state_copy(const BoardState* state, BoardState* other);
+void board_state_print(const BoardState* state, const square_t annotation);
 
-square_t board_state_get_pseudo_legal_squares_pawns(const BoardState* state, bool is_white, square_t selection);
+square_t board_state_get_pseudo_legal_squares_pawns_attacks_no_en_passant(const BoardState* state, bool is_white, square_t selection);
+square_t board_state_get_pseudo_legal_squares_pawns_moves(const BoardState* state, bool is_white, square_t selection);
 square_t board_state_get_pseudo_legal_squares_knights(const BoardState* state, bool is_white, square_t selection);
 square_t board_state_get_pseudo_legal_squares_bishops(const BoardState* state, bool is_white, square_t selection);
 square_t board_state_get_pseudo_legal_squares_rooks(const BoardState* state, bool is_white, square_t selection);

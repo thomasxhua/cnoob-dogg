@@ -28,6 +28,14 @@ void square_to_string(square_t square, char* str, size_t str_size)
     }
 }
 
+uint64_t square_log2_diff(square_t a, square_t b)
+{
+    assert(is_power_of_two(a) && is_power_of_two(b));
+    int a_log2 = __builtin_ctzll(a);
+    int b_log2 = __builtin_ctzll(b); 
+    return abs_diff(a_log2, b_log2);
+}
+
 void bitboard_to_string_annotated(const Bitboard* board, square_t annotation, char* str, size_t str_size)
 {
     assert(board != NULL);

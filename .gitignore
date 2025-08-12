@@ -1,4 +1,6 @@
 dist/
 build.bat
 run.bat
+test.bat
+stockfish.exe
 

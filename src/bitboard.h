@@ -54,6 +54,7 @@ static const square_t BOARD_EDGE      = RANK_1|RANK_8|FILE_A|FILE_H;
 #define BITBOARD_TO_STRING_SIZE (BOARD_SIZE*2 + RANK_SIZE + 1)
 
 void square_to_string(square_t square, char* str, size_t str_size);
+uint64_t square_log2_diff(square_t a, square_t b);
 
 void bitboard_to_string_annotated(const Bitboard* board, square_t annotation, char* str, size_t str_size);
 void bitboard_to_string(const Bitboard* board, char* str, size_t str_size);

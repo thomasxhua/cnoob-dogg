@@ -116,19 +116,22 @@ void board_state_copy(const BoardState* state, BoardState* other)
     memcpy(other, state, sizeof(BoardState));
 }
 
-square_t board_state_get_pseudo_legal_squares_pawns(const BoardState* state, bool is_white, square_t selection)
+void board_state_print(const BoardState* state, const square_t annotation)
+{
+    char board_str[BITBOARD_TO_STRING_SIZE];
+    bitboard_to_string_annotated(&state->board, annotation, board_str, BITBOARD_TO_STRING_SIZE);
+    char fen_str[BOARD_STATE_TO_FEN_STRING_SIZE];
+    board_state_to_fen_string(state, fen_str, BOARD_STATE_TO_FEN_STRING_SIZE);
+    printf("%s\n%s", board_str, fen_str);
+}
+
+square_t board_state_get_pseudo_legal_squares_pawns_attacks_no_en_passant(const BoardState* state, bool is_white, square_t selection)
 {
     assert(state != NULL);
     const Bitboard* board = &state->board;
     const square_t all_pieces      = bitboard_get_all_pieces(board);
     const square_t opponent_pieces = all_pieces & (is_white ? ~board->w : board->w);
     const square_t own_pawns       = selection & board->p & (is_white ? board->w : ~board->w);
-    const square_t moves_once      = is_white
-        ? ~all_pieces & (own_pawns << RANK_SIZE)
-        : ~all_pieces & (own_pawns >> RANK_SIZE);
-    const square_t moves_twice     = is_white
-        ? ~all_pieces & ((~all_pieces & ((own_pawns & RANK_2) << RANK_SIZE)) << RANK_SIZE)
-        : ~all_pieces & ((~all_pieces & ((own_pawns & RANK_7) >> RANK_SIZE)) >> RANK_SIZE);
     const square_t pawns_a         = own_pawns & FILE_A;
     const square_t pawns_h         = own_pawns & FILE_H;
     const square_t pawns_inner     = own_pawns & ~(FILE_A|FILE_H);
@@ -143,7 +146,22 @@ square_t board_state_get_pseudo_legal_squares_pawns(const BoardState* state, boo
             | pawns_inner >> (RANK_SIZE - 1)
             | pawns_inner >> (RANK_SIZE + 1)
             | pawns_h     >> (RANK_SIZE + 1));
-    return moves_once | moves_twice | attacks | state->en_passant_square;
+    return attacks;
+}
+
+square_t board_state_get_pseudo_legal_squares_pawns_moves(const BoardState* state, bool is_white, square_t selection)
+{
+    assert(state != NULL);
+    const Bitboard* board = &state->board;
+    const square_t all_pieces      = bitboard_get_all_pieces(board);
+    const square_t own_pawns       = selection & board->p & (is_white ? board->w : ~board->w);
+    const square_t moves_once      = is_white
+        ? ~all_pieces & (own_pawns << RANK_SIZE)
+        : ~all_pieces & (own_pawns >> RANK_SIZE);
+    const square_t moves_twice     = is_white
+        ? ~all_pieces & ((~all_pieces & ((own_pawns & RANK_2) << RANK_SIZE)) << RANK_SIZE)
+        : ~all_pieces & ((~all_pieces & ((own_pawns & RANK_7) >> RANK_SIZE)) >> RANK_SIZE);
+    return moves_once | moves_twice; /* TODO: en passant and selection dont line up */
 }
 
 square_t board_state_get_pseudo_legal_squares_knights(const BoardState* state, bool is_white, square_t selection)
@@ -163,7 +181,7 @@ square_t board_state_get_pseudo_legal_squares_knights(const BoardState* state, b
         | (own_knights & ~(FILE_A|FILE_B | RANK_8       )) << ((1 * RANK_SIZE) - 2)   // WN
         | (own_knights & ~(FILE_G|FILE_H | RANK_8       )) << ((1 * RANK_SIZE) + 2)   // EN
         | (own_knights & ~(FILE_A|FILE_B | RANK_1       )) >> ((1 * RANK_SIZE) + 2)   // WS
-        | (own_knights & ~(FILE_A|FILE_B | RANK_1       )) >> ((1 * RANK_SIZE) - 2)   // ES
+        | (own_knights & ~(FILE_G|FILE_H | RANK_1       )) >> ((1 * RANK_SIZE) - 2)   // ES
         | (own_knights & ~(FILE_A        | RANK_1|RANK_2)) >> ((2 * RANK_SIZE) + 1)   // SW
         | (own_knights & ~(FILE_H        | RANK_1|RANK_2)) >> ((2 * RANK_SIZE) - 1)); // SE
 }
@@ -383,7 +401,15 @@ size_t board_state_get_pseudo_legal_moves_pawns(const BoardState* state, bool is
     {
         if (!(from & own_pawns))
             continue;
-        const square_t square_moves = board_state_get_pseudo_legal_squares_pawns(state, is_white, from);
+        square_t square_moves = board_state_get_pseudo_legal_squares_pawns_moves(state, is_white, from);
+        BoardState copy = {0};
+        board_state_copy(state, &copy);
+        copy.board.p |= state->en_passant_square;
+        if (is_white)
+            copy.board.w &= ~state->en_passant_square;
+        else
+            copy.board.w |= state->en_passant_square;
+        square_moves |= board_state_get_pseudo_legal_squares_pawns_attacks_no_en_passant(&copy, is_white, from);
         for (square_t to = 1ULL; to; to <<= 1)
         {
             if (!(to & square_moves))
@@ -468,7 +494,7 @@ square_t board_state_get_attacked_kings(const BoardState* state, bool is_white)
 {
     assert(state != NULL);
     const Bitboard* board = &state->board;
-    const square_t moves_pawns   = board_state_get_pseudo_legal_squares_pawns(state, !is_white, BOARD_FULL);
+    const square_t moves_pawns   = board_state_get_pseudo_legal_squares_pawns_attacks_no_en_passant(state, !is_white, BOARD_FULL);
     const square_t moves_knights = board_state_get_pseudo_legal_squares_knights(state, !is_white, BOARD_FULL);
     const square_t moves_bishops = board_state_get_pseudo_legal_squares_bishops(state, !is_white, BOARD_FULL);
     const square_t moves_rooks   = board_state_get_pseudo_legal_squares_rooks(state, !is_white, BOARD_FULL);
@@ -493,7 +519,8 @@ apply_move_status_t board_state_apply_move(BoardState* state, const Move* move)
     if (!from_piece)
         return APPLY_MOVE_STATUS_ERROR_FROM_PIECE_EMPTY;
     const bool is_white = state->fields & BOARD_STATE_FIELDS_ACTIVE_COLOR_W;
-    bool is_capture = bitboard_get_piece_ptr(board, move->to);
+    bool is_capture             = bitboard_get_piece_ptr(board, move->to);
+    // -- handle move --
     if (from_piece == &board->p)
     {
 
@@ -503,8 +530,9 @@ apply_move_status_t board_state_apply_move(BoardState* state, const Move* move)
             : (move->fields & MOVE_FIELDS_QUEENING_CHOICE_B) ? &board->b
             : (move->fields & MOVE_FIELDS_QUEENING_CHOICE_N) ? &board->n
             : &board->q;
-        // handle en passant
-        if (state->en_passant_square && (move->to == state->en_passant_square))
+        // handle en passant active
+        if (state->en_passant_square
+            && (move->to == state->en_passant_square))
         {
             bitboard_clear_square(board, is_white
                 ? (state->en_passant_square << RANK_SIZE)
@@ -532,9 +560,7 @@ apply_move_status_t board_state_apply_move(BoardState* state, const Move* move)
         }
     }
     // handle castling
-    else if (from_piece == &board->k && ((move->from < move->to)
-            ? move->from << 2 == move->to
-            : move->from >> 2 == move->to))
+    else if (from_piece == &board->k && square_log2_diff(move->from, move->to) == 2)
     {
         #define HANDLE_CASTLING(color, direction, clear_range_min, clear_range_max, king_square, rook_square) \
             if (color && (move->from direction move->to)) \
@@ -556,14 +582,17 @@ apply_move_status_t board_state_apply_move(BoardState* state, const Move* move)
     {
         bitboard_move_square(board, move->from, move->to);
     }
-    // set board state data
+    // -- set board state data --
+    // fullmove
     if (is_white)
         state->fullmove_count += 1;
     state->fields ^= BOARD_STATE_FIELDS_ACTIVE_COLOR_W;
+    // halfmove
     if (from_piece == &board->p || is_capture)
         state->halfmove_clock = 0;
     else
         ++state->halfmove_clock;
+    // castling
     if (from_piece == &board->k)
     {
         state->fields &= is_white
@@ -576,6 +605,19 @@ apply_move_status_t board_state_apply_move(BoardState* state, const Move* move)
         if (move->from == H1) state->fields &= ~BOARD_STATE_FIELDS_CASTLING_WK;
         if (move->from == A8) state->fields &= ~BOARD_STATE_FIELDS_CASTLING_BQ;
         if (move->from == H8) state->fields &= ~BOARD_STATE_FIELDS_CASTLING_BK;
+    }
+    // en passant
+    state->en_passant_square = 0;
+    if (square_log2_diff(move->from, move->to) == 2 * RANK_SIZE)
+    {
+        const square_t opponent_pawns = board->p & (is_white ? ~board->w : board->w);
+        if (((move->to    & ~(FILE_H)) && ((move->to << 1) & opponent_pawns))
+            || ((move->to & ~(FILE_A)) && ((move->to >> 1) & opponent_pawns)))
+        {
+            state->en_passant_square = is_white
+                ? move->to >> RANK_SIZE
+                : move->to << RANK_SIZE;
+        }
     }
     // check for king attacks
     return !board_state_get_attacked_kings(state, is_white)
