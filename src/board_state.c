@@ -355,16 +355,18 @@ square_t board_state_get_pseudo_legal_squares_kings(const BoardState* state, boo
         if (state->fields & BOARD_STATE_FIELDS_CASTLING_WQ)
         {
             copy.board = state->board;
-            copy.board.k &= C1|D1|E1;
-            copy.board.w &= C1|D1|E1;
+            const square_t pseudo_kings = C1|D1|E1;
+            copy.board.k |= pseudo_kings;
+            copy.board.w |= pseudo_kings;
             if (!(all_pieces & (B1|C1|D1)) && !board_state_get_attacked_kings(&copy, is_white))
                 moves |= C1;
         }
         if (state->fields & BOARD_STATE_FIELDS_CASTLING_WK)
         {
             copy.board = state->board;
-            copy.board.k &= E1|F1|G1;
-            copy.board.w &= C1|D1|E1;
+            const square_t pseudo_kings = E1|F1|G1;
+            copy.board.k |= pseudo_kings;
+            copy.board.w |= pseudo_kings;
             if (!(all_pieces & (F1|G1)) && !board_state_get_attacked_kings(&copy, is_white))
                 moves |= G1;
         }
@@ -374,15 +376,17 @@ square_t board_state_get_pseudo_legal_squares_kings(const BoardState* state, boo
         if (state->fields & BOARD_STATE_FIELDS_CASTLING_BQ)
         {
             copy.board = state->board;
-            copy.board.k &= C8|D8|E8;
-            if (!(all_pieces & (B8|C8|D8)) && !board_state_get_attacked_kings(&copy, !is_white))
+            const square_t pseudo_kings = C8|D8|E8;
+            copy.board.k |= pseudo_kings;
+            if (!(all_pieces & (B8|C8|D8)) && !board_state_get_attacked_kings(&copy, is_white))
                 moves |= C8;
         }
         if (state->fields & BOARD_STATE_FIELDS_CASTLING_BK)
         {
             copy.board = state->board;
-            copy.board.k &= E8|F8|G8;
-            if (!(all_pieces & (F8|G8)) && !board_state_get_attacked_kings(&copy, !is_white))
+            const square_t pseudo_kings = E8|F8|G8;
+            copy.board.k |= pseudo_kings;
+            if (!(all_pieces & (F8|G8)) && !board_state_get_attacked_kings(&copy, is_white))
                 moves |= G8;
         }
     }

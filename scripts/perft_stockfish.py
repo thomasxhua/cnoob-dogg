@@ -60,9 +60,10 @@ def compare_dicts(a,b):
     diffs = []
     for key,val in a.items():
         a_val = a[key]
-        b_val = b[key]
-        if key in b_keys and a_val != b_val:
-            diffs.append((key,a_val,b_val))
+        if key in b_keys:
+            b_val = b[key]
+            if key in b_keys and a_val != b_val:
+                diffs.append((key,a_val,b_val))
     return a_minus_b,b_minus_a,diffs
 
 def stockfish_cnoobdogg(depth, moves):
@@ -99,7 +100,7 @@ def print_move(move):
 if not os.path.isfile(stockfish_path):
     print(f"Please provide a stockfish binary not found under {stockfish_path}.")
 
-depth = 2
+depth = 5
 moves = ["c2c3", "f7f5", "a2a3", "f5f4", "e2e4", "f4e3"]
 
 stockfish_cnoobdogg(depth, moves)

@@ -28,7 +28,7 @@ void main_no_args()
 #endif
 }
 
-#define PRINT_MANUAL() printf("Usage:\n%s perft <depth> [moves...]\n", argv[0])
+#define PRINT_MANUAL() printf("Usage:\n%s perft <depth> [moves...]\n%s fen [moves...]", argv[0], argv[0])
 
 #define STRING_TO_MOVE_SIZE 4
 
@@ -104,7 +104,8 @@ int main(int argc, char* argv[])
 
     if (strcmp(argv[1], "perft") == 0)
     {
-        if (argc < 3)
+        const int size = 3;
+        if (argc < size)
         {
             PRINT_MANUAL();
             return 1;
@@ -116,11 +117,11 @@ int main(int argc, char* argv[])
             return 1;
         }
         Move* moves = NULL;
-        const size_t moves_size = argc - 3;
-        if (argc > 3)
+        const size_t moves_size = argc - size;
+        if (argc > size)
         {
             moves = malloc(moves_size * sizeof(Move)); // TODO failure
-            const char** move_strs = (const char**)&argv[3];
+            const char** move_strs = (const char**)&argv[size];
             for (size_t i=0; i<moves_size; ++i)
             {
                 const char* move_str = move_strs[i];
@@ -128,6 +129,33 @@ int main(int argc, char* argv[])
             }
         }
         perft_test(depth, moves, moves_size, PERFT_TEST_VERBOSE_ALL);
+        free(moves);
+    }
+    else if (strcmp(argv[1], "fen") == 0)
+    {
+        const int size = 2;
+        if (argc < size)
+        {
+            PRINT_MANUAL();
+            return 1;
+        }
+        Move* moves = NULL;
+        const size_t moves_size = argc - size;
+        if (argc > size)
+        {
+            moves = malloc(moves_size * sizeof(Move)); // TODO failure
+            const char** move_strs = (const char**)&argv[size];
+            for (size_t i=0; i<moves_size; ++i)
+            {
+                const char* move_str = move_strs[i];
+                moves[i] = string_to_move(move_str, strlen(move_str));
+            }
+        }
+        BoardState state = {0};
+        board_state_init(&state);
+        for (size_t i=0; i<moves_size; ++i)
+            board_state_apply_move(&state, &moves[i]);
+        board_state_print(&state, board_state_get_pseudo_legal_squares_kings(&state, true, BOARD_FULL));
         free(moves);
     }
     return 0;
