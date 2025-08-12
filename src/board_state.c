@@ -687,13 +687,10 @@ apply_move_status_t board_state_apply_move(BoardState* state, const Move* move)
             ? ~(BOARD_STATE_FIELDS_CASTLING_WK | BOARD_STATE_FIELDS_CASTLING_WQ)
             : ~(BOARD_STATE_FIELDS_CASTLING_BK | BOARD_STATE_FIELDS_CASTLING_BQ);
     }
-    if (from_piece == &board->r)
-    {
-        if (move->from == A1) state->fields &= ~BOARD_STATE_FIELDS_CASTLING_WQ;
-        if (move->from == H1) state->fields &= ~BOARD_STATE_FIELDS_CASTLING_WK;
-        if (move->from == A8) state->fields &= ~BOARD_STATE_FIELDS_CASTLING_BQ;
-        if (move->from == H8) state->fields &= ~BOARD_STATE_FIELDS_CASTLING_BK;
-    }
+    if ((move->from|move->to) & A1) state->fields &= ~BOARD_STATE_FIELDS_CASTLING_WQ;
+    if ((move->from|move->to) & H1) state->fields &= ~BOARD_STATE_FIELDS_CASTLING_WK;
+    if ((move->from|move->to) & A8) state->fields &= ~BOARD_STATE_FIELDS_CASTLING_BQ;
+    if ((move->from|move->to) & H8) state->fields &= ~BOARD_STATE_FIELDS_CASTLING_BK;
     // en passant
     state->en_passant_square = 0;
     if (from_piece == &board->p && square_log2_diff(move->from, move->to) == 2 * RANK_SIZE)
