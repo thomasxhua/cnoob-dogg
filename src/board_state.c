@@ -177,6 +177,7 @@ void board_state_set_fen_string(BoardState* state, char* str, size_t str_size)
                 case 'Q': state->fields |= BOARD_STATE_FIELDS_CASTLING_WQ; break;
                 case 'k': state->fields |= BOARD_STATE_FIELDS_CASTLING_BK; break;
                 case 'q': state->fields |= BOARD_STATE_FIELDS_CASTLING_BQ; break;
+                case '-': state->fields &= ~BOARD_STATE_FIELDS_CASTLING; is_castling_done = true; break;
                 case ' ': is_castling_done = true; break;
                 default: break;
             }

@@ -11,23 +11,17 @@
 void main_no_args()
 {
     BoardState state = {0};
-    board_state_init(&state);
-#if 1
-    board_state_apply_move(&state, &(Move){C2,C3,0});
-    board_state_apply_move(&state, &(Move){F7,F5,0});
-    board_state_apply_move(&state, &(Move){A2,A3,0});
-    board_state_apply_move(&state, &(Move){F5,F4,0});
-    board_state_apply_move(&state, &(Move){E2,E4,0});
-    board_state_apply_move(&state, &(Move){F4,E3,0});
-    board_state_print(&state, 0);
+    board_state_set_fen_string(&state, "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1", BOARD_STATE_TO_FEN_STRING_SIZE);
+    Move moves[BOARD_STATE_MOVES_SIZE];
+    const size_t count = board_state_get_legal_moves(&state, true, moves, BOARD_STATE_MOVES_SIZE);
+    for (size_t i=0; i<count; ++i)
+    {
+        char move_str[BOARD_STATE_MOVE_TO_STRING_SIZE];
+        board_state_move_to_string(&state, &moves[i], move_str, BOARD_STATE_MOVE_TO_STRING_SIZE);
+        printf("%s, ", move_str);
+    }
     printf("\n");
-    board_state_set_fen_string(&state, "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ", BOARD_STATE_SET_FEN_STRING_SIZE);
-    board_state_print(&state, 0);
-#else
-    board_state_print(&state, 0);
-    bitboard_clear_square(&state.board, A1);
-    board_state_print(&state, 0);
-#endif
+    board_state_print(&state, board_state_get_pseudo_legal_squares_kings(&state, true, BOARD_FULL));
 }
 
 #define PRINT_MANUAL() printf("Usage:\n%s perft <depth> moves...\n%s fen moves...\n%s perft-fen \"FEN\"", argv[0], argv[0], argv[0])
@@ -117,8 +111,6 @@ int main(int argc, char* argv[])
             free(moves);
             char fen_str[BOARD_STATE_SET_FEN_STRING_SIZE];
             board_state_to_fen_string(&state, fen_str, BOARD_STATE_TO_FEN_STRING_SIZE);
-            board_state_print(&state, 0);
-            printf("\n");
             perft_test_fen(depth, fen_str, BOARD_STATE_TO_FEN_STRING_SIZE, PERFT_TEST_VERBOSE_ALL);
         }
         else
