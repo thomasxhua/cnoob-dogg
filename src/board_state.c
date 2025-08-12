@@ -534,9 +534,10 @@ apply_move_status_t board_state_apply_move(BoardState* state, const Move* move)
         if (state->en_passant_square
             && (move->to == state->en_passant_square))
         {
-            bitboard_clear_square(board, is_white
-                ? (state->en_passant_square << RANK_SIZE)
-                : (state->en_passant_square >> RANK_SIZE));
+            const square_t en_passant_target = is_white
+                ? (state->en_passant_square >> RANK_SIZE)
+                : (state->en_passant_square << RANK_SIZE);
+            bitboard_clear_square(board, en_passant_target);
             bitboard_move_square(board, move->from, move->to);
             state->en_passant_square = 0;
             is_capture = true;
@@ -608,7 +609,7 @@ apply_move_status_t board_state_apply_move(BoardState* state, const Move* move)
     }
     // en passant
     state->en_passant_square = 0;
-    if (square_log2_diff(move->from, move->to) == 2 * RANK_SIZE)
+    if (from_piece == &board->p && square_log2_diff(move->from, move->to) == 2 * RANK_SIZE)
     {
         const square_t opponent_pawns = board->p & (is_white ? ~board->w : board->w);
         if (((move->to    & ~(FILE_H)) && ((move->to << 1) & opponent_pawns))

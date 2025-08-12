@@ -10,6 +10,22 @@
 
 void main_no_args()
 {
+    BoardState state = {0};
+    board_state_init(&state);
+#if 1
+    board_state_apply_move(&state, &(Move){C2,C3,0});
+    board_state_apply_move(&state, &(Move){F7,F5,0});
+    board_state_apply_move(&state, &(Move){A2,A3,0});
+    board_state_apply_move(&state, &(Move){F5,F4,0});
+    board_state_apply_move(&state, &(Move){E2,E4,0});
+    board_state_print(&state, 0);
+    board_state_apply_move(&state, &(Move){F4,E3,0});
+    board_state_print(&state, 0);
+#else
+    board_state_print(&state, 0);
+    bitboard_clear_square(&state.board, A1);
+    board_state_print(&state, 0);
+#endif
 }
 
 #define PRINT_MANUAL() printf("Usage:\n%s perft <depth> [moves...]\n", argv[0])

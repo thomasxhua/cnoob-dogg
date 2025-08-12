@@ -6,7 +6,7 @@ stockfish_path = "./stockfish.exe"
 cnoobdogg_path = "./dist/main.exe"
 
 def open_process(cmd):
-    return subprocess.Popen(
+    process = subprocess.Popen(
         cmd,
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
@@ -14,6 +14,8 @@ def open_process(cmd):
         text=True,
         bufsize=1,
     )
+    print("> " + " ".join(cmd))
+    return process
 
 def close_process(process):
     process.stdin.close()
@@ -97,9 +99,8 @@ def print_move(move):
 if not os.path.isfile(stockfish_path):
     print(f"Please provide a stockfish binary not found under {stockfish_path}.")
 
-depth = 5
-moves = ["c2c3"]
+depth = 2
+moves = ["c2c3", "f7f5", "a2a3", "f5f4", "e2e4", "f4e3"]
 
 stockfish_cnoobdogg(depth, moves)
 
-# [('c2c3', 5417640, 5417741), ('e2e3', 9726018, 9726366), ('a2a4', 5363555, 5363574), ('b2b4', 5293555, 5293580), ('c2c4', 5866666, 5866804), ('d2d4', 8879566, 8879595), ('e2e4', 9771632, 9772009), ('f2f4', 4890429, 4890462), ('g2g4', 5239875, 5239902), ('h2h4', 5385554, 5385569)]
