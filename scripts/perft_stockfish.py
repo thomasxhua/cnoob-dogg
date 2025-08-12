@@ -123,7 +123,7 @@ def print_move(move):
 if not os.path.isfile(stockfish_path):
     print(f"Please provide a stockfish binary not found under {stockfish_path}.")
 
-depth = 1
+depth = 6
 moves = []
 fen   = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1"
 

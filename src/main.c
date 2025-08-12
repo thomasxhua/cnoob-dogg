@@ -11,9 +11,10 @@
 void main_no_args()
 {
     BoardState state = {0};
-    board_state_set_fen_string(&state, "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1", BOARD_STATE_TO_FEN_STRING_SIZE);
+    board_state_set_fen_string(&state, "8/2p5/3p4/KP5r/5p2/4P3/5kP1/R7 b - - 4 3", BOARD_STATE_TO_FEN_STRING_SIZE);
     Move moves[BOARD_STATE_MOVES_SIZE];
-    const size_t count = board_state_get_legal_moves(&state, true, moves, BOARD_STATE_MOVES_SIZE);
+    const bool is_white = false;
+    const size_t count = board_state_get_legal_moves(&state, is_white, moves, BOARD_STATE_MOVES_SIZE);
     for (size_t i=0; i<count; ++i)
     {
         char move_str[BOARD_STATE_MOVE_TO_STRING_SIZE];
@@ -21,7 +22,16 @@ void main_no_args()
         printf("%s, ", move_str);
     }
     printf("\n");
-    board_state_print(&state, board_state_get_pseudo_legal_squares_kings(&state, true, BOARD_FULL));
+    board_state_apply_move(&state, &(Move){F2,F1,0});
+    const square_t king_moves     = board_state_get_pseudo_legal_squares_kings(&state, is_white, BOARD_FULL);
+    const square_t attacked_kings = board_state_get_attacked_kings(&state, is_white);
+    const square_t moves_rooks    = board_state_get_pseudo_legal_squares_rooks(&state, !is_white, BOARD_FULL);
+    board_state_print(&state, state.board.p);
+    board_state_print(&state, state.board.r);
+    board_state_print(&state, state.board.k);
+    board_state_print(&state, state.board.w);
+    board_state_print(&state, state.board.w);
+    board_state_print(&state, moves_rooks);
 }
 
 #define PRINT_MANUAL() printf("Usage:\n%s perft <depth> moves...\n%s fen moves...\n%s perft-fen \"FEN\"", argv[0], argv[0], argv[0])

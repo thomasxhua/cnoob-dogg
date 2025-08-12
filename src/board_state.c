@@ -608,7 +608,7 @@ apply_move_status_t board_state_apply_move(BoardState* state, const Move* move)
     if (!from_piece)
         return APPLY_MOVE_STATUS_ERROR_FROM_PIECE_EMPTY;
     const bool is_white = state->fields & BOARD_STATE_FIELDS_ACTIVE_COLOR_W;
-    bool is_capture             = bitboard_get_piece_ptr(board, move->to);
+    bool is_capture = bitboard_get_piece_ptr(board, move->to);
     // -- handle move --
     if (from_piece == &board->p)
     {

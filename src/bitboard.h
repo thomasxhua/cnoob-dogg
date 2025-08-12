@@ -45,7 +45,7 @@ static const square_t FILE_F = F1|F2|F3|F4|F5|F6|F7|F8;
 static const square_t FILE_G = G1|G2|G3|G4|G5|G6|G7|G8;
 static const square_t FILE_H = H1|H2|H3|H4|H5|H6|H7|H8;
 
-static const square_t BOARD_FULL      = ~1ULL;
+static const square_t BOARD_FULL      = ~0ULL;
 static const square_t BOARD_QUEENSIDE = FILE_A|FILE_B|FILE_C|FILE_D;
 static const square_t BOARD_KINGSIDE  = FILE_E|FILE_F|FILE_G|FILE_H;
 static const square_t BOARD_EDGE      = RANK_1|RANK_8|FILE_A|FILE_H;
