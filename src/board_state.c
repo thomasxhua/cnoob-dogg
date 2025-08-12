@@ -17,6 +17,15 @@ void board_state_init(BoardState* state)
     bitboard_set_starting_position(&state->board);
 }
 
+void board_state_clear(BoardState* state)
+{
+    state->board             = (Bitboard){0};
+    state->fullmove_count    = 0;
+    state->halfmove_clock    = 0;
+    state->en_passant_square = 0;
+    state->fields            = BOARD_STATE_FIELDS_CASTLING | BOARD_STATE_FIELDS_ACTIVE_COLOR_W;
+}
+
 void board_state_to_fen_string(const BoardState* state, char* str, size_t str_size)
 {
     assert(state != NULL);
@@ -25,8 +34,8 @@ void board_state_to_fen_string(const BoardState* state, char* str, size_t str_si
     const Bitboard* board = &state->board;
     // piece placement data
     uint64_t empty_counter = 0;
-    uint64_t file_num = FILE_SIZE;
-    square_t square   = 1ULL << (file_num * RANK_SIZE);
+    uint64_t rank_num = RANK_SIZE;
+    square_t square   = 1ULL << (rank_num * RANK_SIZE);
     size_t idx        = 0;
     for (uint64_t i=0; i<BOARD_SIZE; ++i)
     {
@@ -41,7 +50,7 @@ void board_state_to_fen_string(const BoardState* state, char* str, size_t str_si
                 }
                 str[idx++] = '/';
             }
-            square = 1ULL << (--file_num * RANK_SIZE);
+            square = 1ULL << (--rank_num * RANK_SIZE);
         }
         const piece_t piece = bitboard_get_piece(board, square);
         if (piece != PIECE_NONE)
@@ -107,6 +116,80 @@ void board_state_to_fen_string(const BoardState* state, char* str, size_t str_si
     for (char* ptr = fullmove_str; *ptr != '\0'; ++ptr)
         str[idx++] = *ptr;
     str[idx++] = '\0';
+}
+
+void board_state_set_fen_string(BoardState* state, char* str, size_t str_size)
+{
+    assert(state != NULL);
+    board_state_clear(state);
+    Bitboard* board = &state->board;
+    uint64_t rank_num = RANK_SIZE - 1;
+    square_t square = 1ULL << (rank_num * RANK_SIZE);
+    bool is_board_data_done=false, is_active_color_done=false, is_castling_done=false;
+    for (size_t i=0; i<str_size; ++i)
+    {
+        if (!is_board_data_done)
+        {
+            switch (str[i])
+            {
+                // white piece
+                case 'K': bitboard_place_piece(board, square, &board->k, true); square <<= 1; break;
+                case 'Q': bitboard_place_piece(board, square, &board->q, true); square <<= 1; break;
+                case 'R': bitboard_place_piece(board, square, &board->r, true); square <<= 1; break;
+                case 'B': bitboard_place_piece(board, square, &board->b, true); square <<= 1; break;
+                case 'N': bitboard_place_piece(board, square, &board->n, true); square <<= 1; break;
+                case 'P': bitboard_place_piece(board, square, &board->p, true); square <<= 1; break;
+                // black piece
+                case 'k': bitboard_place_piece(board, square, &board->k, false); square <<= 1; break;
+                case 'q': bitboard_place_piece(board, square, &board->q, false); square <<= 1; break;
+                case 'r': bitboard_place_piece(board, square, &board->r, false); square <<= 1; break;
+                case 'b': bitboard_place_piece(board, square, &board->b, false); square <<= 1; break;
+                case 'n': bitboard_place_piece(board, square, &board->n, false); square <<= 1; break;
+                case 'p': bitboard_place_piece(board, square, &board->p, false); square <<= 1; break;
+                // empty
+                case '/': square = 1ULL << (--rank_num * RANK_SIZE); break;
+                case ' ': is_board_data_done = true; break;
+                default:
+                {
+                    if (str[i] >= '1' && str[i] <= '8')
+                        square <<= str[i] - '0';
+                    else
+                        return;
+                    break;
+                }
+            }
+        }
+        else if (!is_active_color_done)
+        {
+            switch (str[i])
+            {
+                case 'w': state->fields |= BOARD_STATE_FIELDS_ACTIVE_COLOR_W; break;
+                case ' ': is_active_color_done = true; break;
+                default:  break;
+            }
+        }
+        else if (!is_castling_done)
+        {
+            switch (str[i])
+            {
+                case 'K': state->fields |= BOARD_STATE_FIELDS_CASTLING_WK; break;
+                case 'Q': state->fields |= BOARD_STATE_FIELDS_CASTLING_WQ; break;
+                case 'k': state->fields |= BOARD_STATE_FIELDS_CASTLING_BK; break;
+                case 'q': state->fields |= BOARD_STATE_FIELDS_CASTLING_BQ; break;
+                case ' ': is_castling_done = true; break;
+                default: break;
+            }
+        }
+        else
+        {
+            state->en_passant_square = string_to_square(str + i, STRING_TO_SQUARE_SIZE);
+            int halfmove=0, fullmove=0;
+            sscanf(str + i + STRING_TO_SQUARE_SIZE, "%d %d", &halfmove, &fullmove);
+            state->halfmove_clock = halfmove;
+            state->fullmove_count = fullmove;
+            return;
+        }
+    }
 }
 
 void board_state_copy(const BoardState* state, BoardState* other)

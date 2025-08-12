@@ -28,6 +28,38 @@ void square_to_string(square_t square, char* str, size_t str_size)
     }
 }
 
+square_t string_to_square(const char* str, size_t str_size)
+{
+    assert(str != NULL);
+    assert(str_size >= STRING_TO_SQUARE_SIZE);
+    square_t file=0, rank=0;
+    switch (str[0])
+    {
+        case 'a': case 'A': file = FILE_A; break;
+        case 'b': case 'B': file = FILE_B; break;
+        case 'c': case 'C': file = FILE_C; break;
+        case 'd': case 'D': file = FILE_D; break;
+        case 'e': case 'E': file = FILE_E; break;
+        case 'f': case 'F': file = FILE_F; break;
+        case 'g': case 'G': file = FILE_G; break;
+        case 'h': case 'H': file = FILE_H; break;
+        default:            file = 0;      break;
+    }
+    switch (str[1])
+    {
+        case '1': rank = RANK_1; break;
+        case '2': rank = RANK_2; break;
+        case '3': rank = RANK_3; break;
+        case '4': rank = RANK_4; break;
+        case '5': rank = RANK_5; break;
+        case '6': rank = RANK_6; break;
+        case '7': rank = RANK_7; break;
+        case '8': rank = RANK_8; break;
+        default:  rank = 0;      break;
+    }
+    return rank & file;
+}
+
 uint64_t square_log2_diff(square_t a, square_t b)
 {
     assert(is_power_of_two(a) && is_power_of_two(b));

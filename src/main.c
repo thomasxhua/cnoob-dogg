@@ -18,8 +18,10 @@ void main_no_args()
     board_state_apply_move(&state, &(Move){A2,A3,0});
     board_state_apply_move(&state, &(Move){F5,F4,0});
     board_state_apply_move(&state, &(Move){E2,E4,0});
-    board_state_print(&state, 0);
     board_state_apply_move(&state, &(Move){F4,E3,0});
+    board_state_print(&state, 0);
+    printf("\n");
+    board_state_set_fen_string(&state, "rnbqkbnr/ppppp1pp/8/8/8/P1P1p3/1P1P1PPP/RNBQKBNR w KQkq - 0 3", BOARD_STATE_SET_FEN_STRING_SIZE);
     board_state_print(&state, 0);
 #else
     board_state_print(&state, 0);
@@ -35,57 +37,8 @@ void main_no_args()
 Move string_to_move(const char* str, size_t str_size)
 {
     assert(str_size >= STRING_TO_MOVE_SIZE);
-    square_t from_file=0,from_rank=0,to_file=0,to_rank=0;
-    switch (str[0])
-    {
-        case 'a': case 'A': from_file = FILE_A; break;
-        case 'b': case 'B': from_file = FILE_B; break;
-        case 'c': case 'C': from_file = FILE_C; break;
-        case 'd': case 'D': from_file = FILE_D; break;
-        case 'e': case 'E': from_file = FILE_E; break;
-        case 'f': case 'F': from_file = FILE_F; break;
-        case 'g': case 'G': from_file = FILE_G; break;
-        case 'h': case 'H': from_file = FILE_H; break;
-        default:            from_file = 0;      break;
-    }
-    switch (str[1])
-    {
-        case '1': from_rank = RANK_1; break;
-        case '2': from_rank = RANK_2; break;
-        case '3': from_rank = RANK_3; break;
-        case '4': from_rank = RANK_4; break;
-        case '5': from_rank = RANK_5; break;
-        case '6': from_rank = RANK_6; break;
-        case '7': from_rank = RANK_7; break;
-        case '8': from_rank = RANK_8; break;
-        default:  from_rank = 0;      break;
-    }
-    switch (str[2])
-    {
-        case 'a': case 'A': to_file = FILE_A; break;
-        case 'b': case 'B': to_file = FILE_B; break;
-        case 'c': case 'C': to_file = FILE_C; break;
-        case 'd': case 'D': to_file = FILE_D; break;
-        case 'e': case 'E': to_file = FILE_E; break;
-        case 'f': case 'F': to_file = FILE_F; break;
-        case 'g': case 'G': to_file = FILE_G; break;
-        case 'h': case 'H': to_file = FILE_H; break;
-        default:            to_file = 0;      break;
-    }
-    switch (str[3])
-    {
-        case '1': to_rank = RANK_1; break;
-        case '2': to_rank = RANK_2; break;
-        case '3': to_rank = RANK_3; break;
-        case '4': to_rank = RANK_4; break;
-        case '5': to_rank = RANK_5; break;
-        case '6': to_rank = RANK_6; break;
-        case '7': to_rank = RANK_7; break;
-        case '8': to_rank = RANK_8; break;
-        default:  to_rank = 0;      break;
-    }
-    const square_t from = from_file & from_rank;
-    const square_t to   = to_file   & to_rank;
+    const square_t from = string_to_square(str, STRING_TO_SQUARE_SIZE);
+    const square_t to   = string_to_square(str + STRING_TO_SQUARE_SIZE, STRING_TO_SQUARE_SIZE);
     return (Move)
     {
         .from   = from,
@@ -155,7 +108,7 @@ int main(int argc, char* argv[])
         board_state_init(&state);
         for (size_t i=0; i<moves_size; ++i)
             board_state_apply_move(&state, &moves[i]);
-        board_state_print(&state, board_state_get_pseudo_legal_squares_kings(&state, true, BOARD_FULL));
+        board_state_print(&state, 0);
         free(moves);
     }
     return 0;
