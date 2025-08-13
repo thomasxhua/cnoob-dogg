@@ -30,18 +30,18 @@ typedef enum
     APPLY_MOVE_STATUS_ILLEGAL_ANY_KING_ATTACKED,
 } apply_move_status_t;
 
-#define BOARD_STATE_TO_FEN_STRING_SIZE \
+#define BOARD_STATE_TO_FEN_STRING_SIZE (\
     BOARD_SIZE + (FILE_SIZE-1) /* board */ \
     + 2  /* active color */ \
     + 5  /* castling */ \
     + 3  /* en passant */ \
     + 4  /* halfmove clock */ \
     + 21 /* fullmove count */ \
-    + 1
-#define BOARD_STATE_SET_FEN_STRING_SIZE BOARD_STATE_TO_FEN_STRING_SIZE - 1
+    + 1)
+#define BOARD_STATE_SET_FEN_STRING_SIZE (BOARD_STATE_TO_FEN_STRING_SIZE - 1)
 #define BOARD_STATE_MOVES_PIECES_SIZE 64
 #define BOARD_STATE_MOVES_SIZE 256
-#define BOARD_STATE_MOVE_TO_STRING_SIZE SQUARE_TO_STRING_SIZE + 1 + SQUARE_TO_STRING_SIZE + 1 + 2 + 1
+#define BOARD_STATE_MOVE_TO_STRING_SIZE (SQUARE_TO_STRING_SIZE + 1 + SQUARE_TO_STRING_SIZE + 1 + 2 + 1)
 
 static const uint8_t BOARD_STATE_FIELDS_CASTLING_WQ    = 1ULL << 0;
 static const uint8_t BOARD_STATE_FIELDS_CASTLING_WK    = 1ULL << 1;
