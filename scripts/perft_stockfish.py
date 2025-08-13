@@ -1,6 +1,7 @@
 import os
 import subprocess
 import re
+import csv
 
 stockfish_path = "./stockfish.exe"
 cnoobdogg_path = "./dist/main.exe"
@@ -66,7 +67,7 @@ def compare_dicts(a,b):
                 diffs.append((key,a_val,b_val))
     return a_minus_b,b_minus_a,diffs
 
-def stockfish_cnoobdogg(depth, moves=[], fen="", stockfish_verbose=False, cnoobdogg_verbose=False):
+def stockfish_cnoobdogg(depth, moves=[], fen="", decrement_depth=True, stockfish_verbose=False, cnoobdogg_verbose=False):
     stockfish = open_process([stockfish_path])
     cnoobdogg_cmd = ["perft" if (fen == "") else "perft-fen"] + [str(depth)]
     if fen != "":
@@ -78,19 +79,20 @@ def stockfish_cnoobdogg(depth, moves=[], fen="", stockfish_verbose=False, cnoobd
     else:
         send_command(stockfish, f"position startpos moves {" ".join(moves)}")
     send_command(stockfish, f"go perft {depth}")
+    send_command(stockfish, "d")
     send_command(stockfish, "quit")
     stockfish_lines = get_lines(stockfish)
     cnoobdogg_lines = get_lines(cnoobdogg)
     if stockfish_verbose:
-        print("----- stockfish execution -----")
+        print("--- stockfish execution ---")
         for line in stockfish_lines:
             print(line, end="")
-        print("\n------------------------------")
+        print("\n--------------------------")
     if cnoobdogg_verbose:
-        print("----- cnoobdogg execution -----")
+        print("--- cnoobdogg execution ---")
         for line in cnoobdogg_lines:
             print(line, end="")
-        print("\n------------------------------")
+        print("\n--------------------------")
     stockfish_dict = lines_to_dict(stockfish_lines)
     cnoobdogg_dict = lines_to_dict(cnoobdogg_lines)
     stockfish_uniques,cnoobdogg_uniques,diffs = compare_dicts(stockfish_dict, cnoobdogg_dict)
@@ -114,7 +116,7 @@ def stockfish_cnoobdogg(depth, moves=[], fen="", stockfish_verbose=False, cnoobd
     print(f"cnoobdogg: {cnoobdogg_total}")
     if (idx > 0):
         chosen_idx = int(input(f"Chase move [n]: "))
-        stockfish_cnoobdogg(depth - 1, moves + [diffs[chosen_idx][0]], fen, stockfish_verbose, cnoobdogg_verbose)
+        stockfish_cnoobdogg(depth - 1 if decrement_depth else depth, moves + [diffs[chosen_idx][0]], fen, stockfish_verbose, cnoobdogg_verbose)
 
 def print_move(move):
     squares,count = move
@@ -123,9 +125,24 @@ def print_move(move):
 if not os.path.isfile(stockfish_path):
     print(f"Please provide a stockfish binary not found under {stockfish_path}.")
 
-depth = 5
-moves = []
-fen   = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1"
+# Test data:
+#   https://github.com/elcabesa/vajolet/blob/master/tests/perft.txt
 
-stockfish_cnoobdogg(depth, moves, fen)
+with open("scripts/perft.csv") as file:
+    reader = csv.reader(file)
+    idx = 0
+    for row in reader:
+        if row:
+            print(f"### FEN: {idx} ###")
+            idx += 1
+            depth = 4
+            moves = []
+            fen   = row[0]
+            stockfish_cnoobdogg(depth, moves, fen, False)
+
+depth = 4
+moves = []
+fen   = ""
+
+stockfish_cnoobdogg(depth, moves, fen, False, True, True)
 

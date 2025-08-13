@@ -23,7 +23,7 @@ void board_state_clear(BoardState* state)
     state->fullmove_count    = 0;
     state->halfmove_clock    = 0;
     state->en_passant_square = 0;
-    state->fields            = BOARD_STATE_FIELDS_CASTLING | BOARD_STATE_FIELDS_ACTIVE_COLOR_W;
+    state->fields            = 0;
 }
 
 void board_state_to_fen_string(const BoardState* state, char* str, size_t str_size)
@@ -207,7 +207,7 @@ void board_state_print(const BoardState* state, const square_t annotation)
     bitboard_to_string_annotated(&state->board, annotation, board_str, BITBOARD_TO_STRING_SIZE);
     char fen_str[BOARD_STATE_TO_FEN_STRING_SIZE];
     board_state_to_fen_string(state, fen_str, BOARD_STATE_TO_FEN_STRING_SIZE);
-    printf("%s\n%s", board_str, fen_str);
+    printf("%s\n%s\n", board_str, fen_str);
 }
 
 square_t board_state_get_pseudo_legal_squares_pawns_attacks_no_en_passant(const BoardState* state, bool is_white, square_t selection)
