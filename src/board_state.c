@@ -118,7 +118,7 @@ void board_state_to_fen_string(const BoardState* state, char* str, size_t str_si
     str[idx++] = '\0';
 }
 
-void board_state_set_fen_string(BoardState* state, char* str, size_t str_size)
+void board_state_set_fen_string(BoardState* state, const char* str, size_t str_size)
 {
     assert(state != NULL);
     board_state_clear(state);

@@ -7,138 +7,143 @@
 #include "bitboard.h"
 #include "board_state.h"
 #include "perft.h"
+#include "uci.h"
+#include "utils.h"
+
+#define CNOOBDOGG_NAME "cnoobdogg 0.1"
 
 #define CNOOBDOGG_MANUAL \
     "Usage:\n" \
-    "  %s perft <depth> moves...    Run perft depth after applying moves to starting position.\n" \
-    "  %s fen moves...              Generate fen string after applying moves to starting position.\n" \
-    "  %s perft-fen <fen> moves...  Run perft depth after applying moves to fen position.\n"
+    "  perft <depth> moves...    Run perft depth after applying moves to starting position.\n" \
+    "  fen moves...              Generate fen string after applying moves to starting position.\n" \
+    "  perft-fen <fen> moves...  Run perft depth after applying moves to fen position.\n" \
+    "  uci                       Start UCI mode.\n"
 
-#define CNOOBDOGG_PRINT_MANUAL() printf(CNOOBDOGG_MANUAL, argv[0], argv[0], argv[0])
+#define CNOOBDOGG_TYPE_HELP "Type 'help' for more information.\n"
 
-int main_no_args();
-int main_perft(int argc, char* argv[]);
-int main_perft_fen(int argc, char* argv[]);
-int main_fen(int argc, char* argv[]);
+#define MAIN_STR_SIZE 256
+#define MAIN_TOKENS_SIZE 64
 
-int main(int argc, char* argv[])
+void handle_fen(char** tokens, size_t tokens_size);
+void handle_perft(char** tokens, size_t tokens_size);
+void handle_perft_fen(char** tokens, size_t tokens_size);
+
+int main(void)
 {
-    CNOOBDOGG_PRINT_MANUAL();
-    if (argc < 2)
-        return main_no_args();
-    else if (strcmp(argv[1], "perft") == 0)
-        return main_perft(argc, argv);
-    else if (strcmp(argv[1], "perft-fen") == 0)
-        return main_perft_fen(argc, argv);
-    else if (strcmp(argv[1], "fen") == 0)
-        return main_fen(argc, argv);
-    return 0;
-}
-
-int main_no_args()
-{
-    return 0;
-}
-
-int main_perft(int argc, char* argv[])
-{
-    const int size = 3;
-    if (argc < size)
+    printf("%s\n", CNOOBDOGG_NAME);
+    char str[MAIN_STR_SIZE];
+    for (;;)
     {
-        CNOOBDOGG_PRINT_MANUAL();
-        return 1;
-    }
-    const uint64_t depth = atoi(argv[2]);
-    if (depth <= 0)
-    {
-        CNOOBDOGG_PRINT_MANUAL();
-        return 1;
-    }
-    Move* moves = NULL;
-    const size_t moves_size = argc - size;
-    if (argc > size)
-    {
-        moves = malloc(moves_size * sizeof(Move)); // TODO failure
-        const char** move_strs = (const char**)&argv[size];
-        for (size_t i=0; i<moves_size; ++i)
+        printf("\n");
+        if (!fgets(str, sizeof(str), stdin))
+            break;
+        str[strcspn(str, "\n")] = '\0';
+        char* tokens[MAIN_TOKENS_SIZE];
+        const size_t tokens_size = string_tokenize_alloc(str, tokens, MAIN_TOKENS_SIZE);
+        const char* cmd = tokens[0];
+        if (strcmp(cmd, "quit") == 0)
         {
-            const char* move_str = move_strs[i];
-            moves[i] = string_to_move(move_str, strlen(move_str));
+            break;
         }
-    }
-    perft_test(depth, moves, moves_size, PERFT_TEST_VERBOSE_ALL);
-    free(moves);
-    return 0;
-}
-
-int main_perft_fen(int argc, char* argv[])
-{
-
-    const int size = 4;
-    if (argc < size)
-    {
-        CNOOBDOGG_PRINT_MANUAL();
-        return 1;
-    }
-    const uint64_t depth = atoi(argv[2]);
-    if (depth <= 0)
-    {
-        CNOOBDOGG_PRINT_MANUAL();
-        return 1;
-    }
-    Move* moves = NULL;
-    const size_t moves_size = argc - size;
-    if (argc > size)
-    {
-        moves = malloc(moves_size * sizeof(Move)); // TODO failure
-        const char** move_strs = (const char**)&argv[size];
-        for (size_t i=0; i<moves_size; ++i)
+        else if (strcmp(cmd, "help") == 0)
         {
-            const char* move_str = move_strs[i];
-            moves[i] = string_to_move(move_str, strlen(move_str));
+            printf(CNOOBDOGG_MANUAL);
         }
-        printf("moves_size: %llu\n", moves_size);
-        BoardState state = {0};
-        board_state_set_fen_string(&state, argv[3], BOARD_STATE_SET_FEN_STRING_SIZE);
-        for (size_t i=0; i<moves_size; ++i)
-            board_state_apply_move(&state, &moves[i]);
-        free(moves);
-        char fen_str[BOARD_STATE_SET_FEN_STRING_SIZE];
-        board_state_to_fen_string(&state, fen_str, BOARD_STATE_TO_FEN_STRING_SIZE);
-        perft_test_fen(depth, fen_str, BOARD_STATE_TO_FEN_STRING_SIZE, PERFT_TEST_VERBOSE_ALL);
-    }
-    else
-    {
-        perft_test_fen(depth, argv[3], BOARD_STATE_TO_FEN_STRING_SIZE, PERFT_TEST_VERBOSE_ALL);
+        else if (strcmp(cmd, "fen") == 0)
+        {
+            handle_fen(tokens + 1, tokens_size - 1);
+        }
+        else if (strcmp(cmd, "perft") == 0)
+        {
+            handle_perft(tokens + 1, tokens_size - 1);
+        }
+        else if (strcmp(cmd, "perft-fen") == 0)
+        {
+            handle_perft_fen(tokens + 1, tokens_size - 1);
+        }
+        else
+        {
+            printf("Unknown command '%s'. " CNOOBDOGG_TYPE_HELP, cmd);
+        }
+        for (size_t i=0; i<tokens_size; ++i)
+            free(tokens[i]);
+        printf("\n");
     }
     return 0;
 }
 
-int main_fen(int argc, char* argv[])
+void handle_fen(char** tokens, size_t tokens_size)
 {
-    const int size = 2;
-    if (argc < size)
-    {
-        CNOOBDOGG_PRINT_MANUAL();
-        return 1;
-    }
+    assert(tokens != NULL);
     Move* moves = NULL;
-    const size_t moves_size = argc - size;
-    if (argc > size)
+    const size_t moves_size = tokens_size;
+    if (moves_size > 0)
     {
-        moves = malloc(moves_size * sizeof(Move)); // TODO failure
-        const char** move_strs = (const char**)&argv[size];
+        moves = malloc(moves_size * sizeof(Move));
         for (size_t i=0; i<moves_size; ++i)
-        {
-            const char* move_str = move_strs[i];
-            moves[i] = string_to_move(move_str, strlen(move_str));
-        }
+            moves[i] = string_to_move(tokens[i], strlen(tokens[i]));
     }
     BoardState state = {0};
     board_state_init(&state);
     for (size_t i=0; i<moves_size; ++i)
         board_state_apply_move(&state, &moves[i]);
     free(moves);
-    return 0;
+    char fen_str[BOARD_STATE_TO_FEN_STRING_SIZE];
+    board_state_to_fen_string(&state, fen_str, BOARD_STATE_TO_FEN_STRING_SIZE);
+    printf("%s\n", fen_str);
+}
+
+void handle_perft(char** tokens, size_t tokens_size)
+{
+    assert(tokens != NULL);
+    if (tokens_size < 1)
+    {
+        printf("Please provide a depth. " CNOOBDOGG_TYPE_HELP);
+        return;
+    }
+    const uint64_t depth = atoi(tokens[0]);
+    Move* moves = NULL;
+    const size_t moves_size = tokens_size - 1;
+    if (moves_size > 0)
+    {
+        moves = malloc(moves_size * sizeof(Move));
+        for (size_t i=0; i<moves_size; ++i)
+            moves[i] = string_to_move(tokens[i+1], strlen(tokens[i+1]));
+    }
+    perft_test(depth, moves, moves_size, PERFT_TEST_VERBOSE_ALL);
+    free(moves);
+}
+
+void handle_perft_fen(char** tokens, size_t tokens_size)
+{
+    assert(tokens != NULL);
+    if (tokens_size < 2)
+    {
+        printf("Please provide a depth and fen string. " CNOOBDOGG_TYPE_HELP);
+        return;
+    }
+    const uint64_t depth = atoi(tokens[1]);
+    Move* moves = NULL;
+    const size_t moves_size = tokens_size - 2;
+    const char* fen_str = tokens[0];
+    if (moves_size > 0)
+    {
+        BoardState state = {0};
+        board_state_set_fen_string(&state, fen_str, BOARD_STATE_SET_FEN_STRING_SIZE);
+        moves = malloc(moves_size * sizeof(Move));
+        for (size_t i=0; i<moves_size; ++i)
+            moves[i] = string_to_move(tokens[i+2], strlen(tokens[i+2]));
+        for (size_t i=0; i<moves_size; ++i)
+            board_state_apply_move(&state, &moves[i]);
+        free(moves);
+        char fen_str_moved[BOARD_STATE_SET_FEN_STRING_SIZE];
+        board_state_to_fen_string(&state, fen_str_moved, BOARD_STATE_TO_FEN_STRING_SIZE);
+        perft_test_fen(depth, fen_str_moved, BOARD_STATE_TO_FEN_STRING_SIZE, PERFT_TEST_VERBOSE_ALL);
+    }
+    else
+    {
+        perft_test_fen(depth, fen_str, BOARD_STATE_TO_FEN_STRING_SIZE, PERFT_TEST_VERBOSE_ALL);
+    }
+    free(moves);
 }
 

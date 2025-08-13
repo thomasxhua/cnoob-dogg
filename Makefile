@@ -8,6 +8,7 @@ SRC = \
 	src/piece.c \
 	src/bitboard.c \
 	src/board_state.c \
+	src/uci.c \
 	src/perft.c \
 	src/main.c
 

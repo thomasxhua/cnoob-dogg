@@ -102,7 +102,7 @@ size_t perft_test(uint64_t depth, Move* moves, size_t moves_size, perft_test_ver
     return total_size;
 }
 
-size_t perft_test_fen(uint64_t depth, char* str, size_t str_size, perft_test_verbose_t verbose)
+size_t perft_test_fen(uint64_t depth, const char* str, size_t str_size, perft_test_verbose_t verbose)
 {
     BoardState state = {0};
     board_state_set_fen_string(&state, str, str_size);

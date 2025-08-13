@@ -38,7 +38,7 @@ typedef enum
     + 4  /* halfmove clock */ \
     + 21 /* fullmove count */ \
     + 1)
-#define BOARD_STATE_SET_FEN_STRING_SIZE (BOARD_STATE_TO_FEN_STRING_SIZE - 1)
+#define BOARD_STATE_SET_FEN_STRING_SIZE BOARD_STATE_TO_FEN_STRING_SIZE
 #define BOARD_STATE_MOVES_PIECES_SIZE 64
 #define BOARD_STATE_MOVES_SIZE 256
 #define BOARD_STATE_MOVE_TO_STRING_SIZE (SQUARE_TO_STRING_SIZE + 1 + SQUARE_TO_STRING_SIZE + 1 + 2 + 1)
@@ -60,7 +60,7 @@ static const uint64_t CASTLING_DISTANCE = 2ULL;
 void board_state_init(BoardState* state);
 void board_state_clear(BoardState* state);
 void board_state_to_fen_string(const BoardState* state, char* str, size_t str_size);
-void board_state_set_fen_string(BoardState* state, char* str, size_t str_size);
+void board_state_set_fen_string(BoardState* state, const char* str, size_t str_size);
 void board_state_copy(const BoardState* state, BoardState* other);
 void board_state_print(const BoardState* state, const square_t annotation);
 

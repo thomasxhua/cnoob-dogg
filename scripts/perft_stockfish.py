@@ -69,18 +69,16 @@ def compare_dicts(a,b):
 
 def stockfish_cnoobdogg(depth, moves=[], fen="", decrement_depth=True, stockfish_verbose=False, cnoobdogg_verbose=False):
     stockfish = open_process([stockfish_path])
-    cnoobdogg_cmd = ["perft" if (fen == "") else "perft-fen"] + [str(depth)]
-    if fen != "":
-        cnoobdogg_cmd.append(fen)
-    cnoobdogg_cmd += moves
-    cnoobdogg = open_process([cnoobdogg_path] + (["perft", str(depth)] if (fen == "") else ["perft-fen", str(depth), fen]) + moves)
-    if (fen != ""):
+    cnoobdogg = open_process([cnoobdogg_path])
+    if fen:
         send_command(stockfish, f"position fen {fen} moves {" ".join(moves)}")
     else:
         send_command(stockfish, f"position startpos moves {" ".join(moves)}")
     send_command(stockfish, f"go perft {depth}")
     send_command(stockfish, "d")
     send_command(stockfish, "quit")
+    send_command(cnoobdogg, f"perft{"-fen" if fen else ""}{f" \"{fen}\"" if fen else ""} {depth} {" ".join(moves)}")
+    send_command(cnoobdogg, "quit")
     stockfish_lines = get_lines(stockfish)
     cnoobdogg_lines = get_lines(cnoobdogg)
     if stockfish_verbose:
@@ -128,21 +126,21 @@ if not os.path.isfile(stockfish_path):
 # Test data:
 #   https://github.com/elcabesa/vajolet/blob/master/tests/perft.txt
 
-with open("scripts/perft.csv") as file:
-    reader = csv.reader(file)
-    idx = 0
-    for row in reader:
-        if row:
-            print(f"### FEN: {idx} ###")
-            idx += 1
-            depth = 4
-            moves = []
-            fen   = row[0]
-            stockfish_cnoobdogg(depth, moves, fen, False)
+#with open("scripts/perft.csv") as file:
+#    reader = csv.reader(file)
+#    idx = 0
+#    for row in reader:
+#        if row:
+#            print(f"### FEN: {idx} ###")
+#            idx += 1
+#            depth = 4
+#            moves = []
+#            fen   = row[0]
+#            stockfish_cnoobdogg(depth, moves, fen, False)
 
-depth = 4
+depth = 5
 moves = []
 fen   = ""
 
-stockfish_cnoobdogg(depth, moves, fen, False, True, True)
+stockfish_cnoobdogg(depth, moves, fen, False)#, True, True)
 
