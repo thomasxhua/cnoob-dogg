@@ -3,27 +3,13 @@
 #include <assert.h>
 #include <stdio.h>
 
-Move string_to_move(const char* str, size_t str_size)
-{
-    assert(str_size >= STRING_TO_MOVE_SIZE);
-    const square_t from = string_to_square(str, STRING_TO_SQUARE_SIZE);
-    const square_t to   = string_to_square(str + STRING_TO_SQUARE_SIZE, STRING_TO_SQUARE_SIZE);
-    return (Move)
-    {
-        .from   = from,
-        .to     = to,
-        .fields = 0
-    };
-} 
-
 size_t perft_board_state_count(const BoardState* state, uint64_t depth)
 {
     assert(state != NULL);
     if (depth == 0)
         return 1;
     Move moves[BOARD_STATE_MOVES_SIZE];
-    const bool is_white = state->fields & BOARD_STATE_FIELDS_ACTIVE_COLOR_W;
-    const size_t count  = board_state_get_legal_moves(state, is_white, moves, BOARD_STATE_MOVES_SIZE);
+    const size_t count  = board_state_get_legal_moves(state, moves, BOARD_STATE_MOVES_SIZE);
     if (depth == 1)
         return count;
     size_t sum = 0;
@@ -49,8 +35,7 @@ size_t perft_board_state_test(const BoardState* state, uint64_t depth, bool is_p
     if (depth == 0)
         return 1;
     Move moves[BOARD_STATE_MOVES_SIZE];
-    const bool is_white = state->fields & BOARD_STATE_FIELDS_ACTIVE_COLOR_W;
-    const size_t count  = board_state_get_legal_moves(state, is_white, moves, BOARD_STATE_MOVES_SIZE);
+    const size_t count  = board_state_get_legal_moves(state, moves, BOARD_STATE_MOVES_SIZE);
     size_t sum = 0;
     for (size_t i=0; i<count; ++i)
     {

@@ -1,7 +1,7 @@
 CXX = gcc
 CPPFLAGS = -g -O0
 CXXFLAGS = -std=c99 -Wall -Wextra -pedantic -static
-LDFLAGS  =
+LDFLAGS  = -lpthread
 
 SRC = \
 	src/utils.c \

@@ -3,8 +3,10 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 #include "utils.h"
+#include "debug.h"
 
 void board_state_init(BoardState* state)
 {
@@ -203,17 +205,23 @@ void board_state_copy(const BoardState* state, BoardState* other)
 
 void board_state_print(const BoardState* state, const square_t annotation)
 {
+    assert(state != NULL);
     char board_str[BITBOARD_TO_STRING_SIZE];
     bitboard_to_string_annotated(&state->board, annotation, board_str, BITBOARD_TO_STRING_SIZE);
     char fen_str[BOARD_STATE_TO_FEN_STRING_SIZE];
     board_state_to_fen_string(state, fen_str, BOARD_STATE_TO_FEN_STRING_SIZE);
-    printf("%s\n%s\n", board_str, fen_str);
+    printf("%s\n%s; eval: %.2f\n", board_str, fen_str, board_state_evaluate(state));
+}
+
+bool board_state_is_white(const BoardState* state)
+{
+    return state->fields & BOARD_STATE_FIELDS_ACTIVE_COLOR_W;   
 }
 
 square_t board_state_get_pseudo_legal_squares_pawns_attacks_no_en_passant(const BoardState* state, bool is_white, square_t selection)
 {
     assert(state != NULL);
-    const Bitboard* board = &state->board;
+    const Bitboard* board          = &state->board;
     const square_t all_pieces      = bitboard_get_all_pieces(board);
     const square_t opponent_pieces = all_pieces & (is_white ? ~board->w : board->w);
     const square_t own_pawns       = selection & board->p & (is_white ? board->w : ~board->w);
@@ -237,7 +245,7 @@ square_t board_state_get_pseudo_legal_squares_pawns_attacks_no_en_passant(const 
 square_t board_state_get_pseudo_legal_squares_pawns_moves(const BoardState* state, bool is_white, square_t selection)
 {
     assert(state != NULL);
-    const Bitboard* board = &state->board;
+    const Bitboard* board          = &state->board;
     const square_t all_pieces      = bitboard_get_all_pieces(board);
     const square_t own_pawns       = selection & board->p & (is_white ? board->w : ~board->w);
     const square_t moves_once      = is_white
@@ -252,7 +260,7 @@ square_t board_state_get_pseudo_legal_squares_pawns_moves(const BoardState* stat
 square_t board_state_get_pseudo_legal_squares_knights(const BoardState* state, bool is_white, square_t selection)
 {
     assert(state != NULL);
-    const Bitboard* board = &state->board;
+    const Bitboard* board      = &state->board;
     const square_t own_knights = selection & board->n & (is_white ? board->w : ~board->w);
     const square_t own_pieces  = bitboard_get_all_pieces(board) & (is_white ? board->w : ~board->w);
     //   .NW .NE .
@@ -443,7 +451,7 @@ square_t board_state_get_pseudo_legal_squares_kings(const BoardState* state, boo
             const square_t pseudo_kings = C1|D1|E1;
             copy.board.k |= pseudo_kings;
             copy.board.w |= pseudo_kings;
-            if (!(all_pieces & (B1|C1|D1)) && !board_state_get_attacked_kings(&copy, is_white))
+            if (!(all_pieces & (B1|C1|D1)) && !board_state_get_attacked_kings(&copy))
                 moves |= C1;
         }
         if (state->fields & BOARD_STATE_FIELDS_CASTLING_WK)
@@ -452,7 +460,7 @@ square_t board_state_get_pseudo_legal_squares_kings(const BoardState* state, boo
             const square_t pseudo_kings = E1|F1|G1;
             copy.board.k |= pseudo_kings;
             copy.board.w |= pseudo_kings;
-            if (!(all_pieces & (F1|G1)) && !board_state_get_attacked_kings(&copy, is_white))
+            if (!(all_pieces & (F1|G1)) && !board_state_get_attacked_kings(&copy))
                 moves |= G1;
         }
     }
@@ -463,7 +471,7 @@ square_t board_state_get_pseudo_legal_squares_kings(const BoardState* state, boo
             copy.board = state->board;
             const square_t pseudo_kings = C8|D8|E8;
             copy.board.k |= pseudo_kings;
-            if (!(all_pieces & (B8|C8|D8)) && !board_state_get_attacked_kings(&copy, is_white))
+            if (!(all_pieces & (B8|C8|D8)) && !board_state_get_attacked_kings(&copy))
                 moves |= C8;
         }
         if (state->fields & BOARD_STATE_FIELDS_CASTLING_BK)
@@ -471,19 +479,20 @@ square_t board_state_get_pseudo_legal_squares_kings(const BoardState* state, boo
             copy.board = state->board;
             const square_t pseudo_kings = E8|F8|G8;
             copy.board.k |= pseudo_kings;
-            if (!(all_pieces & (F8|G8)) && !board_state_get_attacked_kings(&copy, is_white))
+            if (!(all_pieces & (F8|G8)) && !board_state_get_attacked_kings(&copy))
                 moves |= G8;
         }
     }
     return moves;
 }
 
-size_t board_state_get_pseudo_legal_moves_pawns(const BoardState* state, bool is_white, Move* moves, size_t moves_size)
+size_t board_state_get_pseudo_legal_moves_pawns(const BoardState* state, Move* moves, size_t moves_size)
 {
     assert(state != NULL);
     assert(moves != NULL);
     assert(moves_size >= BOARD_STATE_MOVES_PIECES_SIZE);
     const Bitboard* board     = &state->board;
+    const bool is_white       = board_state_is_white(state);
     const square_t own_pawns = board->p & (is_white ? board->w : ~board->w);
     size_t idx = 0;
     for (square_t from = 1ULL; from; from <<= 1)
@@ -531,12 +540,13 @@ size_t board_state_get_pseudo_legal_moves_pawns(const BoardState* state, bool is
 }
 
 #define BOARD_STATE_GET_PSEUDO_LEGAL_MOVES_PIECE(name, lowercase) \
-    size_t board_state_get_pseudo_legal_moves_##name(const BoardState* state, bool is_white, Move* moves, size_t moves_size) \
+    size_t board_state_get_pseudo_legal_moves_##name(const BoardState* state, Move* moves, size_t moves_size) \
     { \
         assert(state != NULL); \
         assert(moves != NULL); \
         assert(moves_size >= BOARD_STATE_MOVES_PIECES_SIZE); \
         const Bitboard* board     = &state->board; \
+        const bool is_white       = board_state_is_white(state); \
         const square_t own_##name = board->lowercase & (is_white ? board->w : ~board->w); \
         size_t idx = 0; \
         for (square_t from = 1ULL; from; from <<= 1) \
@@ -564,25 +574,26 @@ BOARD_STATE_GET_PSEUDO_LEGAL_MOVES_PIECE(queens, q)
 BOARD_STATE_GET_PSEUDO_LEGAL_MOVES_PIECE(kings, k)
 #undef BOARD_STATE_GET_PSEUDO_LEGAL_MOVES_PIECE
 
-size_t board_state_get_pseudo_legal_moves(const BoardState* state, bool is_white, Move* moves, size_t moves_size)
+size_t board_state_get_pseudo_legal_moves(const BoardState* state, Move* moves, size_t moves_size)
 {
     assert(state != NULL);
     assert(moves != NULL);
     assert(moves_size >= BOARD_STATE_MOVES_SIZE);
     size_t idx = 0;
-    idx += board_state_get_pseudo_legal_moves_pawns(state, is_white, moves + idx, moves_size);
-    idx += board_state_get_pseudo_legal_moves_knights(state, is_white, moves + idx, moves_size);
-    idx += board_state_get_pseudo_legal_moves_bishops(state, is_white, moves + idx, moves_size);
-    idx += board_state_get_pseudo_legal_moves_rooks(state, is_white, moves + idx, moves_size);
-    idx += board_state_get_pseudo_legal_moves_queens(state, is_white, moves + idx, moves_size);
-    idx += board_state_get_pseudo_legal_moves_kings(state, is_white, moves + idx, moves_size);
+    idx += board_state_get_pseudo_legal_moves_pawns(state, moves + idx, moves_size);
+    idx += board_state_get_pseudo_legal_moves_knights(state, moves + idx, moves_size);
+    idx += board_state_get_pseudo_legal_moves_bishops(state, moves + idx, moves_size);
+    idx += board_state_get_pseudo_legal_moves_rooks(state, moves + idx, moves_size);
+    idx += board_state_get_pseudo_legal_moves_queens(state, moves + idx, moves_size);
+    idx += board_state_get_pseudo_legal_moves_kings(state, moves + idx, moves_size);
     return idx;
 }
 
-square_t board_state_get_attacked_kings(const BoardState* state, bool is_white)
+square_t board_state_get_attacked_kings(const BoardState* state)
 {
     assert(state != NULL);
-    const Bitboard* board = &state->board;
+    const Bitboard* board        = &state->board;
+    const bool is_white          = board_state_is_white(state);
     const square_t moves_pawns   = board_state_get_pseudo_legal_squares_pawns_attacks_no_en_passant(state, !is_white, BOARD_FULL);
     const square_t moves_knights = board_state_get_pseudo_legal_squares_knights(state, !is_white, BOARD_FULL);
     const square_t moves_bishops = board_state_get_pseudo_legal_squares_bishops(state, !is_white, BOARD_FULL);
@@ -607,7 +618,7 @@ apply_move_status_t board_state_apply_move(BoardState* state, const Move* move)
     const square_t* from_piece = bitboard_get_piece_ptr_const(board, move->from);
     if (!from_piece)
         return APPLY_MOVE_STATUS_ERROR_FROM_PIECE_EMPTY;
-    const bool is_white = state->fields & BOARD_STATE_FIELDS_ACTIVE_COLOR_W;
+    const bool is_white = board_state_is_white(state);
     bool is_capture = bitboard_get_piece_ptr(board, move->to);
     // -- handle move --
     if (from_piece == &board->p)
@@ -706,18 +717,18 @@ apply_move_status_t board_state_apply_move(BoardState* state, const Move* move)
         }
     }
     // check for king attacks
-    return !board_state_get_attacked_kings(state, is_white)
+    return !board_state_get_attacked_kings(state)
         ? APPLY_MOVE_STATUS_OK
         : APPLY_MOVE_STATUS_ILLEGAL_ANY_KING_ATTACKED;
 }
 
-size_t board_state_get_legal_moves(const BoardState* state, bool is_white, Move* moves, size_t moves_size)
+size_t board_state_get_legal_moves(const BoardState* state, Move* moves, size_t moves_size)
 {
     assert(state != NULL);
     assert(moves != NULL);
     assert(moves_size >= BOARD_STATE_MOVES_SIZE);
     Move temp_moves[BOARD_STATE_MOVES_SIZE];
-    const size_t length = board_state_get_pseudo_legal_moves(state, is_white, temp_moves, BOARD_STATE_MOVES_SIZE);
+    const size_t length = board_state_get_pseudo_legal_moves(state, moves, BOARD_STATE_MOVES_SIZE);
     BoardState copy;
     size_t idx = 0;
     for (size_t i=0; i<length; ++i)
@@ -729,45 +740,92 @@ size_t board_state_get_legal_moves(const BoardState* state, bool is_white, Move*
     return idx;
 }
 
-void board_state_move_to_string(const BoardState* state, const Move* move, char* str, size_t str_size)
+float board_state_evaluate_piece_count(const BoardState* state)
 {
     assert(state != NULL);
-    assert(move != NULL);
-    const Bitboard* board     = &state->board;
-    const square_t* piece_ptr = bitboard_get_piece_ptr_const(board, move->from);
-    char piece_char =
-        (piece_ptr == &board->k) ? 'K'
-        : (piece_ptr == &board->q) ? 'Q'
-        : (piece_ptr == &board->r) ? 'R'
-        : (piece_ptr == &board->b) ? 'B'
-        : (piece_ptr == &board->n) ? 'N'
-        : (piece_ptr == &board->p) ? 'P'
-        : '?';
-    char str_from_moves[SQUARE_TO_STRING_SIZE];
-    char str_to_moves[SQUARE_TO_STRING_SIZE];
-    char str_queening[3] = {0};
-    square_to_string(move->from, str_from_moves, SQUARE_TO_STRING_SIZE);
-    square_to_string(move->to, str_to_moves, SQUARE_TO_STRING_SIZE);
-    if (move->fields == MOVE_FIELDS_QUEENING_CHOICE_Q)
-    {
-        str_queening[0] = '=';
-        str_queening[1] = 'Q';
-    }
-    if (move->fields == MOVE_FIELDS_QUEENING_CHOICE_R)
-    {
-        str_queening[0] = '=';
-        str_queening[1] = 'R';
-    }
-    if (move->fields == MOVE_FIELDS_QUEENING_CHOICE_B)
-    {
-        str_queening[0] = '=';
-        str_queening[1] = 'B';
-    }
-    if (move->fields == MOVE_FIELDS_QUEENING_CHOICE_N)
-    {
-        str_queening[0] = '=';
-        str_queening[1] = 'N';
-    }
-    snprintf(str, str_size, "%c%s-%s%s", piece_char, str_from_moves, str_to_moves, str_queening);
+    #define EVALUATE_PIECE_COUNT(scalar, piece) \
+        scalar * (__builtin_popcountll(board->piece & board->w) - __builtin_popcountll(board->piece & ~board->w))
+    const Bitboard* board = &state->board;
+    return EVALUATE_PIECE_COUNT(200.0f, k)
+        + EVALUATE_PIECE_COUNT(9.0f, q)
+        + EVALUATE_PIECE_COUNT(5.0f, r)
+        + EVALUATE_PIECE_COUNT(3.0f, b)
+        + EVALUATE_PIECE_COUNT(3.0f, n)
+        + EVALUATE_PIECE_COUNT(1.0f, p);
+    #undef EVALUATE_PIECE_COUNT
 }
+
+evaluation_t board_state_evaluate(const BoardState* state)
+{
+    assert(state != NULL);
+    return board_state_evaluate_piece_count(state);
+}
+
+evaluation_t board_state_evaluate_minimax(const BoardState* state, uint64_t depth)
+{
+    assert(state != NULL);
+    const evaluation_t sign = board_state_is_white(state) ? 1.0f : -1.0f;
+    if (depth == 0)
+        return sign * board_state_evaluate(state);
+    Move moves[BOARD_STATE_MOVES_SIZE];
+    const size_t moves_size = board_state_get_pseudo_legal_moves(state, moves, BOARD_STATE_MOVES_SIZE);
+    if (moves_size == 0)
+        return -INFINITY;
+    evaluation_t max_evaluation = -INFINITY;
+    for (size_t i=0; i<moves_size; ++i)
+    {
+        const Move* move = &moves[i];
+        BoardState copy  = {0};
+        board_state_copy(state, &copy);
+        board_state_apply_move(&copy, move);
+        const evaluation_t evaluation = board_state_evaluate_minimax(&copy, depth - 1);
+        if (evaluation > max_evaluation)
+            max_evaluation = evaluation;
+    }
+    return max_evaluation;
+}
+
+void move_to_string(const Move* move, char* str, size_t str_size)
+{
+    assert(move != NULL);
+    assert(str != NULL);
+    assert(str_size >= MOVE_TO_STRING_SIZE);
+    square_to_string(move->from, str, SQUARE_TO_STRING_SIZE);
+    square_to_string(move->to, str + (SQUARE_TO_STRING_SIZE-1), SQUARE_TO_STRING_SIZE);
+    char castling = ' ';
+    if (move->fields & MOVE_FIELDS_QUEENING_CHOICE_Q)
+        castling = 'q';
+    else if (move->fields & MOVE_FIELDS_QUEENING_CHOICE_R)
+        castling = 'r';
+    else if (move->fields & MOVE_FIELDS_QUEENING_CHOICE_B)
+        castling = 'b';
+    else if (move->fields & MOVE_FIELDS_QUEENING_CHOICE_N)
+        castling = 'n';
+    str[4] = (castling != ' ') ? castling : '\0';
+}
+
+Move string_to_move(const char* str, size_t str_size)
+{
+    assert(str_size >= STRING_TO_MOVE_SIZE);
+    const square_t from = string_to_square(str, STRING_TO_SQUARE_SIZE);
+    const square_t to   = string_to_square(str + STRING_TO_SQUARE_SIZE, STRING_TO_SQUARE_SIZE);
+    uint8_t fields = 0;
+    if (str_size > STRING_TO_MOVE_SIZE)
+    {
+        switch (str[4])
+        {
+            case 'q': fields |= MOVE_FIELDS_QUEENING_CHOICE_Q; break;
+            case 'r': fields |= MOVE_FIELDS_QUEENING_CHOICE_R; break;
+            case 'b': fields |= MOVE_FIELDS_QUEENING_CHOICE_B; break;
+            case 'n': fields |= MOVE_FIELDS_QUEENING_CHOICE_N; break;
+            default: break;
+        }
+    }
+    return (Move)
+    {
+        .from   = from,
+        .to     = to,
+        .fields = fields
+    };
+} 
 

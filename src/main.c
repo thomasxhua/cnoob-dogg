@@ -10,8 +10,6 @@
 #include "uci.h"
 #include "utils.h"
 
-#define CNOOBDOGG_NAME "cnoobdogg 0.1"
-
 #define CNOOBDOGG_MANUAL \
     "Usage:\n" \
     "  perft <depth> moves...    Run perft depth after applying moves to starting position.\n" \
@@ -21,7 +19,7 @@
 
 #define CNOOBDOGG_TYPE_HELP "Type 'help' for more information.\n"
 
-#define MAIN_STR_SIZE 256
+#define MAIN_BUFFER_SIZE 256
 #define MAIN_TOKENS_SIZE 64
 
 void handle_fen(char** tokens, size_t tokens_size);
@@ -30,41 +28,33 @@ void handle_perft_fen(char** tokens, size_t tokens_size);
 
 int main(void)
 {
-    printf("%s\n", CNOOBDOGG_NAME);
-    char str[MAIN_STR_SIZE];
+    setvbuf(stdout, NULL, _IONBF, 0);
+    setvbuf(stdin, NULL, _IONBF, 0);
+    printf("%s\n", UCI_CNOOBDOGG_NAME);
+    char buffer[MAIN_BUFFER_SIZE];
     for (;;)
     {
         printf("\n");
-        if (!fgets(str, sizeof(str), stdin))
+        if (!fgets(buffer, sizeof(buffer), stdin))
             break;
-        str[strcspn(str, "\n")] = '\0';
+        buffer[strcspn(buffer, "\n")] = '\0';
         char* tokens[MAIN_TOKENS_SIZE];
-        const size_t tokens_size = string_tokenize_alloc(str, tokens, MAIN_TOKENS_SIZE);
+        const size_t tokens_size = string_tokenize_alloc(buffer, tokens, MAIN_TOKENS_SIZE);
         const char* cmd = tokens[0];
         if (strcmp(cmd, "quit") == 0)
-        {
             break;
-        }
         else if (strcmp(cmd, "help") == 0)
-        {
             printf(CNOOBDOGG_MANUAL);
-        }
         else if (strcmp(cmd, "fen") == 0)
-        {
             handle_fen(tokens + 1, tokens_size - 1);
-        }
         else if (strcmp(cmd, "perft") == 0)
-        {
             handle_perft(tokens + 1, tokens_size - 1);
-        }
         else if (strcmp(cmd, "perft-fen") == 0)
-        {
             handle_perft_fen(tokens + 1, tokens_size - 1);
-        }
+        else if (strcmp(cmd, "uci") == 0)
+            uci_run_dialog();
         else
-        {
             printf("Unknown command '%s'. " CNOOBDOGG_TYPE_HELP, cmd);
-        }
         for (size_t i=0; i<tokens_size; ++i)
             free(tokens[i]);
         printf("\n");
