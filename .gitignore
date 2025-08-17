@@ -3,4 +3,4 @@ build.bat
 run.bat
 test.bat
 stockfish.exe
-
+dist/*.pgn

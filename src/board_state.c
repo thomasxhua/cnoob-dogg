@@ -210,7 +210,7 @@ void board_state_print(const BoardState* state, const square_t annotation)
     bitboard_to_string_annotated(&state->board, annotation, board_str, BITBOARD_TO_STRING_SIZE);
     char fen_str[BOARD_STATE_TO_FEN_STRING_SIZE];
     board_state_to_fen_string(state, fen_str, BOARD_STATE_TO_FEN_STRING_SIZE);
-    printf("%s\n%s; eval: %.2f\n", board_str, fen_str, board_state_evaluate(state));
+    printf("%s\n%s; eval: %.2f\n", board_str, fen_str, (board_state_is_white(state) ? 1.0f : -1.0f) * board_state_evaluate_abs(state));
 }
 
 bool board_state_is_white(const BoardState* state)
@@ -754,18 +754,17 @@ float board_state_evaluate_piece_count(const BoardState* state)
     #undef EVALUATE_PIECE_COUNT
 }
 
-evaluation_t board_state_evaluate(const BoardState* state)
+evaluation_t board_state_evaluate_abs(const BoardState* state)
 {
     assert(state != NULL);
-    return board_state_evaluate_piece_count(state);
+    return (board_state_is_white(state) ? 1.0f : -1.0f) * board_state_evaluate_piece_count(state);
 }
 
 evaluation_t board_state_evaluate_minimax(const BoardState* state, uint64_t depth)
 {
     assert(state != NULL);
-    const evaluation_t sign = board_state_is_white(state) ? 1.0f : -1.0f;
     if (depth == 0)
-        return sign * board_state_evaluate(state);
+        return board_state_evaluate_abs(state);
     Move moves[BOARD_STATE_MOVES_SIZE];
     const size_t moves_size = board_state_get_pseudo_legal_moves(state, moves, BOARD_STATE_MOVES_SIZE);
     if (moves_size == 0)
@@ -777,7 +776,7 @@ evaluation_t board_state_evaluate_minimax(const BoardState* state, uint64_t dept
         BoardState copy  = {0};
         board_state_copy(state, &copy);
         board_state_apply_move(&copy, move);
-        const evaluation_t evaluation = board_state_evaluate_minimax(&copy, depth - 1);
+        const evaluation_t evaluation = -board_state_evaluate_minimax(&copy, depth - 1);
         if (evaluation > max_evaluation)
             max_evaluation = evaluation;
     }

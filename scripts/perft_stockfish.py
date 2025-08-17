@@ -126,23 +126,21 @@ if not os.path.isfile(stockfish_path):
 # Test data:
 #   https://github.com/elcabesa/vajolet/blob/master/tests/perft.txt
 
-"""
-"""
-with open("scripts/perft.csv") as file:
-    reader = csv.reader(file)
-    idx = 0
-    for row in reader:
-        if row:
-            print(f"### FEN: {idx} ###")
-            idx += 1
-            depth = 4
-            moves = []
-            fen   = row[0]
-            stockfish_cnoobdogg(depth, moves, fen, False)
-
-depth = 4
-moves = []
-fen   = ""
-
-stockfish_cnoobdogg(depth, moves, fen)#, True, True)
+if False:
+    with open("scripts/perft.csv") as file:
+        reader = csv.reader(file)
+        idx = 0
+        for row in reader:
+            if row:
+                print(f"### FEN: {idx} ###")
+                idx += 1
+                depth = 4
+                moves = []
+                fen   = row[0]
+                stockfish_cnoobdogg(depth, moves, fen, False)
+else:
+    depth = 1
+    moves = []
+    fen   = "rnbqkbnr/1ppppppp/8/p6Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 1 3"
+    stockfish_cnoobdogg(depth, moves, fen)#, True, True)
 

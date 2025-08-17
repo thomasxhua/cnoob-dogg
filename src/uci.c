@@ -7,6 +7,7 @@
 #include <math.h>
 
 #include "utils.h"
+#include "dyn_array.h"
 
 void uci_state_init_alloc(UCIState* uci)
 {
@@ -20,17 +21,21 @@ void uci_state_init_alloc(UCIState* uci)
 void uci_run_dialog(void)
 {
     uci_cmd_uci();
-    char buffer[UCI_BUFFER_SIZE];
     UCIState uci = {0};
     uci_state_init_alloc(&uci);
     for (;;)
     {
         printf("\n");
-        if (!fgets(buffer, sizeof(buffer), stdin))
-            break;
-        buffer[strcspn(buffer, "\n")] = '\0';
+        dyn_array_char buffer;
+        dyn_array_char_alloc(&buffer, UCI_BUFFER_SIZE);
+        int c = getc(stdin);
+        for (; c && c != '\n' && c != EOF; c = getc(stdin))
+            dyn_array_char_append(&buffer, (char)c);
+        if (c == EOF && buffer.size == 0)
+                break;
+        dyn_array_char_append(&buffer, '\0');
         char* tokens[UCI_TOKENS_SIZE];
-        const size_t tokens_size    = string_tokenize_alloc(buffer, tokens, UCI_TOKENS_SIZE);
+        const size_t tokens_size    = string_tokenize_alloc(buffer.data, tokens, UCI_TOKENS_SIZE);
         char** tokens_in            = tokens+1;
         const size_t tokens_in_size = tokens_size-1;
         const char* cmd = tokens[0];
@@ -103,7 +108,7 @@ void uci_cmd_position(UCIState* uci, char** tokens, size_t tokens_size)
             for (size_t i=1; i<=moves_size; ++i)
             {
                 const char* move_token = tokens[i+moves_token_idx];
-                const Move move = string_to_move(move_token, strlen(move_token));
+                const Move move        = string_to_move(move_token, strlen(move_token));
                 board_state_apply_move(&uci->state, &move);
             }
         }
@@ -228,7 +233,7 @@ void* uci_search_loop(void* arg)
                 BoardState copy  = {0};
                 board_state_copy(state, &copy);
                 board_state_apply_move(&copy, move);
-                const evaluation_t evaluation = board_state_evaluate_minimax(&copy, uci->depth);
+                const evaluation_t evaluation = -board_state_evaluate_minimax(&copy, uci->depth);
                 if (evaluation > max_evaluation)
                 {
                     max_evaluation = evaluation;
@@ -239,6 +244,8 @@ void* uci_search_loop(void* arg)
         }
         default: break;
     }
+    char bestmove_str[MOVE_TO_STRING_SIZE];
+    move_to_string(&uci->bestmove, bestmove_str, MOVE_TO_STRING_SIZE);
     return NULL;
 }
 

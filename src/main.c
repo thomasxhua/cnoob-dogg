@@ -9,6 +9,7 @@
 #include "perft.h"
 #include "uci.h"
 #include "utils.h"
+#include "dyn_array.h"
 
 #define CNOOBDOGG_MANUAL \
     "Usage:\n" \
@@ -31,15 +32,19 @@ int main(void)
     setvbuf(stdout, NULL, _IONBF, 0);
     setvbuf(stdin, NULL, _IONBF, 0);
     printf("%s\n", UCI_CNOOBDOGG_NAME);
-    char buffer[MAIN_BUFFER_SIZE];
     for (;;)
     {
         printf("\n");
-        if (!fgets(buffer, sizeof(buffer), stdin))
-            break;
-        buffer[strcspn(buffer, "\n")] = '\0';
+        dyn_array_char buffer;
+        dyn_array_char_alloc(&buffer, MAIN_BUFFER_SIZE);
+        int c = getc(stdin);
+        for (; c && c != '\n' && c != EOF; c = getc(stdin))
+            dyn_array_char_append(&buffer, (char)c);
+        if (c == EOF && buffer.size == 0)
+                break;
+        dyn_array_char_append(&buffer, '\0');
         char* tokens[MAIN_TOKENS_SIZE];
-        const size_t tokens_size = string_tokenize_alloc(buffer, tokens, MAIN_TOKENS_SIZE);
+        const size_t tokens_size = string_tokenize_alloc(buffer.data, tokens, MAIN_TOKENS_SIZE);
         const char* cmd = tokens[0];
         if (strcmp(cmd, "quit") == 0)
             break;

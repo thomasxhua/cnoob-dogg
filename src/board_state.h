@@ -92,7 +92,7 @@ apply_move_status_t board_state_apply_move(BoardState* state, const Move* move);
 size_t board_state_get_legal_moves(const BoardState* state, Move* moves, size_t moves_size);
 
 evaluation_t board_state_evaluate_piece_count(const BoardState* state);
-evaluation_t board_state_evaluate(const BoardState* state);
+evaluation_t board_state_evaluate_abs(const BoardState* state);
 evaluation_t board_state_evaluate_minimax(const BoardState* state, uint64_t depth);
 
 void move_to_string(const Move* move, char* str, size_t str_size);

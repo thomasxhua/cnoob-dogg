@@ -41,5 +41,7 @@
         arr->data[arr->size++] = val; \
     }
 
+DEFINE_DYN_ARRAY(char, dyn_array_char)
+
 #endif // DYN_ARRAY_H
 
