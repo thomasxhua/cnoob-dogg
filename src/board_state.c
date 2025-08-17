@@ -16,6 +16,7 @@ void board_state_init(BoardState* state)
         | BOARD_STATE_FIELDS_CASTLING_BK
         | BOARD_STATE_FIELDS_CASTLING_BQ
         | BOARD_STATE_FIELDS_ACTIVE_COLOR_W;
+    state->fullmove_count = 1;
     bitboard_set_starting_position(&state->board);
 }
 
