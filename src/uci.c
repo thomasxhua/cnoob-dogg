@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "debug.h"
 #include "utils.h"
 
 void uci_state_init_alloc(UCIState* uci)

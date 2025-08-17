@@ -3,9 +3,9 @@
 
 #include <stdio.h>
 
-#define DELOG(msg)       printf("[DELOG] " msg)
-#define DEVAR(fmt, name) printf("[DELOG] #%s: " fmt "\n", #name, name)
-#define ERROR(msg)       printf("[ERROR] " msg)
+#define DELOG(msg)       printf("[DELOG] " msg "\n")
+#define DEVAR(fmt, name) printf("[DELOG] %s: " fmt "\n", #name, name)
+#define ERROR(msg)       printf("[ERROR] " msg "\n")
 
 #endif // DEBUG_H
 

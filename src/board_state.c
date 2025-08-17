@@ -6,7 +6,6 @@
 #include <math.h>
 
 #include "utils.h"
-#include "debug.h"
 
 void board_state_init(BoardState* state)
 {
@@ -452,7 +451,7 @@ square_t board_state_get_pseudo_legal_squares_kings(const BoardState* state, boo
             const square_t pseudo_kings = C1|D1|E1;
             copy.board.k |= pseudo_kings;
             copy.board.w |= pseudo_kings;
-            if (!(all_pieces & (B1|C1|D1)) && !board_state_get_attacked_kings(&copy))
+            if (!(all_pieces & (B1|C1|D1)) && !board_state_get_attacked_kings(&copy, is_white))
                 moves |= C1;
         }
         if (state->fields & BOARD_STATE_FIELDS_CASTLING_WK)
@@ -461,7 +460,7 @@ square_t board_state_get_pseudo_legal_squares_kings(const BoardState* state, boo
             const square_t pseudo_kings = E1|F1|G1;
             copy.board.k |= pseudo_kings;
             copy.board.w |= pseudo_kings;
-            if (!(all_pieces & (F1|G1)) && !board_state_get_attacked_kings(&copy))
+            if (!(all_pieces & (F1|G1)) && !board_state_get_attacked_kings(&copy, is_white))
                 moves |= G1;
         }
     }
@@ -472,7 +471,7 @@ square_t board_state_get_pseudo_legal_squares_kings(const BoardState* state, boo
             copy.board = state->board;
             const square_t pseudo_kings = C8|D8|E8;
             copy.board.k |= pseudo_kings;
-            if (!(all_pieces & (B8|C8|D8)) && !board_state_get_attacked_kings(&copy))
+            if (!(all_pieces & (B8|C8|D8)) && !board_state_get_attacked_kings(&copy, is_white))
                 moves |= C8;
         }
         if (state->fields & BOARD_STATE_FIELDS_CASTLING_BK)
@@ -480,7 +479,7 @@ square_t board_state_get_pseudo_legal_squares_kings(const BoardState* state, boo
             copy.board = state->board;
             const square_t pseudo_kings = E8|F8|G8;
             copy.board.k |= pseudo_kings;
-            if (!(all_pieces & (F8|G8)) && !board_state_get_attacked_kings(&copy))
+            if (!(all_pieces & (F8|G8)) && !board_state_get_attacked_kings(&copy, is_white))
                 moves |= G8;
         }
     }
@@ -590,11 +589,10 @@ size_t board_state_get_pseudo_legal_moves(const BoardState* state, Move* moves, 
     return idx;
 }
 
-square_t board_state_get_attacked_kings(const BoardState* state)
+square_t board_state_get_attacked_kings(const BoardState* state, bool is_white)
 {
     assert(state != NULL);
     const Bitboard* board        = &state->board;
-    const bool is_white          = board_state_is_white(state);
     const square_t moves_pawns   = board_state_get_pseudo_legal_squares_pawns_attacks_no_en_passant(state, !is_white, BOARD_FULL);
     const square_t moves_knights = board_state_get_pseudo_legal_squares_knights(state, !is_white, BOARD_FULL);
     const square_t moves_bishops = board_state_get_pseudo_legal_squares_bishops(state, !is_white, BOARD_FULL);
@@ -718,7 +716,7 @@ apply_move_status_t board_state_apply_move(BoardState* state, const Move* move)
         }
     }
     // check for king attacks
-    return !board_state_get_attacked_kings(state)
+    return !board_state_get_attacked_kings(state, is_white)
         ? APPLY_MOVE_STATUS_OK
         : APPLY_MOVE_STATUS_ILLEGAL_ANY_KING_ATTACKED;
 }
@@ -729,7 +727,7 @@ size_t board_state_get_legal_moves(const BoardState* state, Move* moves, size_t 
     assert(moves != NULL);
     assert(moves_size >= BOARD_STATE_MOVES_SIZE);
     Move temp_moves[BOARD_STATE_MOVES_SIZE];
-    const size_t length = board_state_get_pseudo_legal_moves(state, moves, BOARD_STATE_MOVES_SIZE);
+    const size_t length = board_state_get_pseudo_legal_moves(state, temp_moves, BOARD_STATE_MOVES_SIZE);
     BoardState copy;
     size_t idx = 0;
     for (size_t i=0; i<length; ++i)

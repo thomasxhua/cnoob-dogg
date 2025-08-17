@@ -114,7 +114,7 @@ def stockfish_cnoobdogg(depth, moves=[], fen="", decrement_depth=True, stockfish
     print(f"cnoobdogg: {cnoobdogg_total}")
     if (idx > 0):
         chosen_idx = int(input(f"Chase move [n]: "))
-        stockfish_cnoobdogg(depth - 1 if decrement_depth else depth, moves + [diffs[chosen_idx][0]], fen, stockfish_verbose, cnoobdogg_verbose)
+        stockfish_cnoobdogg(depth - 1 if decrement_depth else depth, moves + [diffs[chosen_idx][0]], fen, decrement_depth, stockfish_verbose, cnoobdogg_verbose)
 
 def print_move(move):
     squares,count = move
@@ -126,6 +126,8 @@ if not os.path.isfile(stockfish_path):
 # Test data:
 #   https://github.com/elcabesa/vajolet/blob/master/tests/perft.txt
 
+"""
+"""
 with open("scripts/perft.csv") as file:
     reader = csv.reader(file)
     idx = 0
@@ -133,14 +135,14 @@ with open("scripts/perft.csv") as file:
         if row:
             print(f"### FEN: {idx} ###")
             idx += 1
-            depth = 5
+            depth = 4
             moves = []
             fen   = row[0]
             stockfish_cnoobdogg(depth, moves, fen, False)
 
-depth = 5
+depth = 4
 moves = []
 fen   = ""
 
-stockfish_cnoobdogg(depth, moves, fen, False)#, True, True)
+stockfish_cnoobdogg(depth, moves, fen)#, True, True)
 

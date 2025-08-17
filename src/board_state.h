@@ -86,7 +86,7 @@ size_t board_state_get_pseudo_legal_moves_kings(const BoardState* state, Move* m
 
 size_t board_state_get_pseudo_legal_moves(const BoardState* state, Move* moves, size_t moves_size);
 
-square_t board_state_get_attacked_kings(const BoardState* state);
+square_t board_state_get_attacked_kings(const BoardState* state, bool is_white);
 apply_move_status_t board_state_apply_move(BoardState* state, const Move* move);
 
 size_t board_state_get_legal_moves(const BoardState* state, Move* moves, size_t moves_size);
