@@ -26,13 +26,12 @@ uint64_t abs_diff(uint64_t a, uint64_t b)
     return (a < b) ? b-a : a-b;
 }
 
-size_t string_tokenize_alloc(char* str, char** tokens, size_t tokens_size)
+#include "debug.h"
+void string_tokenize_alloc(char* str, dyn_array_char_ptr* buffer)
 {
     assert(str != NULL);
-    assert(tokens != NULL);
-    size_t idx = 0;
     char* p = str;
-    while (*p && idx < tokens_size)
+    while (*p)
     {
         for (; isspace(*p); ++p);
         if (*p == '\0') break;
@@ -56,8 +55,7 @@ size_t string_tokenize_alloc(char* str, char** tokens, size_t tokens_size)
             memcpy(token, token_start, token_size);
             token[token_size] = '\0';
         }
-        tokens[idx++] = token;
+        dyn_array_char_ptr_append(buffer, token);
     }
-    return idx;
 }
 

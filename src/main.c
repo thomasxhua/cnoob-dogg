@@ -43,25 +43,28 @@ int main(void)
         if (c == EOF && buffer.size == 0)
                 break;
         dyn_array_char_append(&buffer, '\0');
-        char* tokens[MAIN_TOKENS_SIZE];
-        const size_t tokens_size = string_tokenize_alloc(buffer.data, tokens, MAIN_TOKENS_SIZE);
-        const char* cmd = tokens[0];
+        dyn_array_char_ptr tokens;
+        dyn_array_char_ptr_alloc(&tokens, MAIN_TOKENS_SIZE);
+        string_tokenize_alloc(buffer.data, &tokens);
+        const char* cmd = tokens.data[0];
         if (strcmp(cmd, "quit") == 0)
             break;
         else if (strcmp(cmd, "help") == 0)
             printf(CNOOBDOGG_MANUAL);
         else if (strcmp(cmd, "fen") == 0)
-            handle_fen(tokens + 1, tokens_size - 1);
+            handle_fen(tokens.data + 1, tokens.size - 1);
         else if (strcmp(cmd, "perft") == 0)
-            handle_perft(tokens + 1, tokens_size - 1);
+            handle_perft(tokens.data + 1, tokens.size - 1);
         else if (strcmp(cmd, "perft-fen") == 0)
-            handle_perft_fen(tokens + 1, tokens_size - 1);
+            handle_perft_fen(tokens.data + 1, tokens.size - 1);
         else if (strcmp(cmd, "uci") == 0)
             uci_run_dialog();
         else
             printf("Unknown command '%s'. " CNOOBDOGG_TYPE_HELP, cmd);
-        for (size_t i=0; i<tokens_size; ++i)
-            free(tokens[i]);
+        for (size_t i=0; i<tokens.size; ++i)
+            free(tokens.data[i]);
+        dyn_array_char_free(&buffer);
+        dyn_array_char_ptr_free(&tokens);
         printf("\n");
     }
     return 0;

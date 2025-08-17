@@ -34,11 +34,12 @@ void uci_run_dialog(void)
         if (c == EOF && buffer.size == 0)
                 break;
         dyn_array_char_append(&buffer, '\0');
-        char* tokens[UCI_TOKENS_SIZE];
-        const size_t tokens_size    = string_tokenize_alloc(buffer.data, tokens, UCI_TOKENS_SIZE);
-        char** tokens_in            = tokens+1;
-        const size_t tokens_in_size = tokens_size-1;
-        const char* cmd = tokens[0];
+        dyn_array_char_ptr tokens;
+        dyn_array_char_ptr_alloc(&tokens, UCI_TOKENS_SIZE);
+        string_tokenize_alloc(buffer.data, &tokens);
+        char** tokens_in            = tokens.data+1;
+        const size_t tokens_in_size = tokens.size-1;
+        const char* cmd = tokens.data[0];
         if (strcmp(cmd, "uci") == 0)
             uci_cmd_uci();
         else if (strcmp(cmd, "debug") == 0)
@@ -57,8 +58,10 @@ void uci_run_dialog(void)
             assert(false && "NOT IMPLEMENTED");
         else if (strcmp(cmd, "quit") == 0)
             break;
-        for (size_t i=0; i<tokens_size; ++i)
-            free(tokens[i]);
+        for (size_t i=0; i<tokens.size; ++i)
+            free(tokens.data[i]);
+        dyn_array_char_free(&buffer);
+        dyn_array_char_ptr_free(&tokens);
     }
     dyn_array_pthread_free(&uci.threads);
 }
@@ -85,6 +88,7 @@ void uci_cmd_isready(void)
     uci_send_readyok();
 }
 
+#include "debug.h"
 void uci_cmd_position(UCIState* uci, char** tokens, size_t tokens_size)
 {
     assert(uci != NULL);
@@ -219,7 +223,7 @@ void* uci_search_loop(void* arg)
     UCIState* uci           = arg;
     const BoardState* state = &uci->state;
     Move moves[BOARD_STATE_MOVES_SIZE];
-    const size_t moves_size = board_state_get_pseudo_legal_moves(state, moves, BOARD_STATE_MOVES_SIZE);
+    const size_t moves_size = board_state_get_legal_moves(state, moves, BOARD_STATE_MOVES_SIZE);
     if (moves_size == 0)
         return NULL;
     switch (uci->search_mode)

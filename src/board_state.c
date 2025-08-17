@@ -766,7 +766,7 @@ evaluation_t board_state_evaluate_minimax(const BoardState* state, uint64_t dept
     if (depth == 0)
         return board_state_evaluate_abs(state);
     Move moves[BOARD_STATE_MOVES_SIZE];
-    const size_t moves_size = board_state_get_pseudo_legal_moves(state, moves, BOARD_STATE_MOVES_SIZE);
+    const size_t moves_size = board_state_get_legal_moves(state, moves, BOARD_STATE_MOVES_SIZE);
     if (moves_size == 0)
         return -INFINITY;
     evaluation_t max_evaluation = -INFINITY;

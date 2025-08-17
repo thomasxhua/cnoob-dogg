@@ -42,6 +42,7 @@
     }
 
 DEFINE_DYN_ARRAY(char, dyn_array_char)
+DEFINE_DYN_ARRAY(char*, dyn_array_char_ptr)
 
 #endif // DYN_ARRAY_H
 

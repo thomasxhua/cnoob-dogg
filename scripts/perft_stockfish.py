@@ -141,6 +141,6 @@ if False:
 else:
     depth = 1
     moves = []
-    fen   = "rnbqkbnr/1ppppppp/8/p6Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 1 3"
+    fen   = "2b1k1nr/3p3p/3N4/5pp1/6P1/4pP1P/2n3K1/5B1R b k - 1 23"
     stockfish_cnoobdogg(depth, moves, fen)#, True, True)
 
