@@ -88,7 +88,6 @@ void uci_cmd_isready(void)
     uci_send_readyok();
 }
 
-#include "debug.h"
 void uci_cmd_position(UCIState* uci, char** tokens, size_t tokens_size)
 {
     assert(uci != NULL);
