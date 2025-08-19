@@ -1,6 +1,10 @@
-dist/
+build/
 build.bat
 run.bat
 test.bat
 stockfish.exe
-dist/*.pgn
+nob
+nob.exe
+nob.old
+nob.exe.old
+
