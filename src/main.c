@@ -13,10 +13,10 @@
 
 #define CNOOBDOGG_MANUAL \
     "Usage:\n" \
-    "  perft <depth> moves...    Run perft depth after applying moves to starting position.\n" \
-    "  fen moves...              Generate fen string after applying moves to starting position.\n" \
-    "  perft-fen <fen> moves...  Run perft depth after applying moves to fen position.\n" \
-    "  uci                       Start UCI mode.\n"
+    "  perft <depth> <move>*    Run perft depth after applying moves to starting position.\n" \
+    "  fen <move>*              Generate fen string after applying moves to starting position.\n" \
+    "  perft-fen <fen> <move>*  Run perft depth after applying moves to fen position.\n" \
+    "  uci                      Start UCI mode.\n"
 
 #define CNOOBDOGG_TYPE_HELP "Type 'help' for more information.\n"
 
