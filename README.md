@@ -2,7 +2,7 @@
 
 ## build
 ```console
-$ cc -o nob nob.c
+$ gcc -o nob src/nob.c
 $ ./nob
 ```
 See [https://github.com/tsoding/nob.h](https://github.com/tsoding/nob.h) for more information.
