@@ -1,5 +1,5 @@
 # cnoobdogg chess engine
-
+A UCI compliant chess engine.
 ## build
 ```console
 $ gcc -o nob src/nob.c
