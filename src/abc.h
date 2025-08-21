@@ -2,8 +2,7 @@
 #define ABC_H
 
 // ---------- <dyn_array.h> ----------
-#ifndef DYN_ARRAY_H
-#define DYN_ARRAY_H
+#ifndef DEFINE_DYN_ARRAY
 
 #include <assert.h>
 #include <stdlib.h>
@@ -45,7 +44,7 @@
         arr->data[arr->size++] = val; \
     }
 
-#endif // DYN_ARRAY_H
+#endif // DEFINE_DYN_ARRAY
 // ---------- </dyn_array.h> ----------
 
 #include <stdint.h>
@@ -102,48 +101,56 @@ static inline abc_second_t abc_now()
 #endif
 */
 
+extern dyn_array_abclock* abc__clock_central;
+extern int abc_is_clock_central_initialized;
+
+#ifdef ABC_IMPLEMENTATION
+dyn_array_abclock* abc__clock_central = 0;
+int abc_is_clock_central_initialized  = 0;
+#endif
+
 static inline dyn_array_abclock* abc_clock_central(void)
 {
-    static int is_clock_initialized = 0;
-    static dyn_array_abclock clock_central;
-    if (!is_clock_initialized)
+    if (!abc_is_clock_central_initialized)
     {
-        dyn_array_abclock_alloc(&clock_central, 16);
-        is_clock_initialized = 1;
+        abc__clock_central = malloc(sizeof(dyn_array_abclock));
+        dyn_array_abclock_alloc(abc__clock_central, 16);
+        abc_is_clock_central_initialized = 1;
     }
-    return &clock_central;
+    return abc__clock_central;
 }
 
 static inline void abc_clock_central_free(void)
 {
-    dyn_array_abclock* clock_central = abc_clock_central();
-    if (clock_central)
-        dyn_array_abclock_free(clock_central);
+    if (abc__clock_central)
+    {
+        dyn_array_abclock_free(abc__clock_central);
+        free(abc__clock_central);
+    }
 }
 
 static inline ABClock* abc_clock_get(abc_clock_t id)
 {
-    const dyn_array_abclock* clock_central = abc_clock_central();
-    if (id >= clock_central->size)
+    if (id >= abc_clock_central()->size)
     {
         printf(ABC_MSG_PREFIX ABC_MSG_ERROR_AT "No clock with id %llu.\n", __func__, id);
         return NULL;
     }
-    return &clock_central->data[id];
+    return &abc_clock_central()->data[id];
 }
 
 static inline abc_clock_t abc_clock_register(const char* name)
 {
     
-    dyn_array_abclock* clock_central = abc_clock_central();
-    const abc_clock_t id             = clock_central->size;
-    dyn_array_abclock_append(clock_central, (ABClock)
+    const abc_clock_t id = abc_clock_central()->size;
+    dyn_array_abclock_append(abc_clock_central(), (ABClock)
     {
         .id    = id,
         .name  = name,
         .total = 0,
         .start = 0,
     });
+    printf(ABC_MSG_PREFIX "Registered clock '%s' with id %llu.\n", name, id);
     return id;
 }
 
@@ -206,6 +213,27 @@ static inline void abc__pie_chart(int count, ...)
     for (int i=0; i<count; ++i)
     {
         const ABClock* clock = abc_clock_get(va_arg(copy,abc_clock_t));
+        if (clock)
+            printf(ABC_MSG_PREFIX "  %s: %.2f%% (" ABC_MSG_CLOCK_FMT ")\n",
+                clock->name,
+                100.0f * clock->total / sum_totals,
+                clock->total);
+    }
+}
+
+static inline void abc_pie_chart_all(void)
+{
+    double sum_totals = 0;
+    for (size_t i=0; i<abc_clock_central()->size; ++i)
+    {
+        const ABClock* clock = abc_clock_get(i);
+        if (clock)
+            sum_totals += clock->total;
+    }
+    printf(ABC_MSG_PREFIX "Pie chart (sum=" ABC_MSG_CLOCK_FMT "):\n", sum_totals);
+    for (size_t i=0; i<abc_clock_central()->size; ++i)
+    {
+        const ABClock* clock = abc_clock_get(i);
         if (clock)
             printf(ABC_MSG_PREFIX "  %s: %.2f%% (" ABC_MSG_CLOCK_FMT ")\n",
                 clock->name,
